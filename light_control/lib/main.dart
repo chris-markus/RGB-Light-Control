@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 //import 'package:http/http.dart' as http;
 
-import './pages/connect_page.dart';
 import './pages/parameters.dart';
 
 import './utils/fetch_devices.dart';
@@ -18,74 +17,72 @@ class MainApp extends StatefulWidget {
 }
 
 class MainState extends State<MainApp> {
-
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   PageController _pageController;
   int _page = 0;
-  final tabKey;
+  final tabKey = null;
+
+  static const String routeName = '/material/modal-bottom-sheet';
 
   ThemeData theme = new ThemeData(
     brightness: Brightness.light,
-    primaryColor: Colors.blue, //Changing this will change the color of the TabBar
+    primaryColor: Colors.blue,
     accentColor: Colors.cyan[600],
+    dividerColor: Colors.blue,
   );
 
-
-
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return new MaterialApp(
-      theme: theme,
-      home: Scaffold(
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        floatingActionButton:
-          FloatingActionButton(
-          child: Icon(Icons.devices),
-          elevation: 1000.0,
-            onPressed: () => _scaffoldKey.currentState.openDrawer(),
-        ),
-         key: _scaffoldKey,
-         body: new PageView(
-           children: [
-             new Container(child: ParameterView(tabKey)),
-             new Container(child: Icon(Icons.toll)),
-           ],
-           controller: _pageController,
-           onPageChanged: onPageChanged
-         ),
-         bottomNavigationBar: new BottomNavigationBar(
-           items: [
-             new BottomNavigationBarItem(title: Text("Control"),icon: Icon(Icons.tonality)),
-             new BottomNavigationBarItem(
-               title: Text(""),
-               icon: Text(""),
-               backgroundColor: Colors.red
-             ),
-             new BottomNavigationBarItem(title: Text("Animation"),icon: Icon(Icons.toll)),
-           ],
-           currentIndex: _page,
-           onTap: naviTap,
-         ),
-         drawer: new Drawer(
-           child: DeviceList()
-           ),
-         )
-    );
+        theme: theme,
+        home: Scaffold(
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerDocked,
+          floatingActionButton: FloatingActionButton(
+            child: Icon(Icons.devices),
+            elevation: 1000.0,
+            onPressed: () =>_scaffoldKey.currentState.openDrawer()
+          ),
+          key: _scaffoldKey,
+          appBar: new AppBar(
+            title: Text("Connected")
+          ),
+          body: new PageView(
+            physics: new NeverScrollableScrollPhysics(),
+              children: [
+                new Container(child: ParameterView(tabKey)),
+                new Container(child: Icon(Icons.toll)),
+              ],
+              controller: _pageController, onPageChanged: onPageChanged),
+          bottomNavigationBar: new BottomNavigationBar(
+            items: [
+              new BottomNavigationBarItem(
+                  title: Text("Control"), icon: Icon(Icons.tonality)),
+              new BottomNavigationBarItem(
+                title: Text(""),
+                icon: Text(""),
+              ),
+              new BottomNavigationBarItem(
+                  title: Text("Animation"), icon: Icon(Icons.toll)),
+            ],
+            currentIndex: _page,
+            onTap: naviTap,
+          ),
+          drawer: new Drawer(
+            child: DeviceList()
+          ),
+        ));
   }
 
-  void naviTap(int page){
-    if(page == 1){
+  void naviTap(int page) {
+    if (page == 1) {
       _scaffoldKey.currentState.openDrawer();
       return;
-    }
-    else if(page >= 1){
+    } else if (page >= 1) {
       page = 1;
     }
-    _pageController.animateToPage(
-      page,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.ease
-    );
+    _pageController.animateToPage(page,
+        duration: const Duration(milliseconds: 300), curve: Curves.ease);
   }
 
   @override
@@ -95,28 +92,28 @@ class MainState extends State<MainApp> {
   }
 
   @override
-  void dispose(){
+  void dispose() {
     super.dispose();
     _pageController.dispose();
   }
 
-  void onPageChanged(int page){
-    if(page == 1){
+  void onPageChanged(int page) {
+    if (page == 1) {
       page = 2;
     }
-    setState((){
+    setState(() {
       this._page = page;
     });
   }
 }
 
-class DeviceList extends StatefulWidget{
+//Device List
+class DeviceList extends StatefulWidget {
   @override
   createState() => DeviceListState();
 }
 
 class DeviceListState extends State<DeviceList> {
-
   var _devices = <Device>[];
   var _listItems = <Widget>[];
   var _listKey;
@@ -125,10 +122,7 @@ class DeviceListState extends State<DeviceList> {
 
   @override
   Widget build(BuildContext context) {
-    return new ListView(
-      key: _listKey,
-      children: _buildList()
-    );
+    return new ListView(key: _listKey, children: _buildList());
   }
 
   List<Widget> _buildList() {
@@ -137,35 +131,35 @@ class DeviceListState extends State<DeviceList> {
     _listItems.add(ListTile(
       leading: IconButton(
         icon: Icon(Icons.refresh),
-        onPressed: (){
+        onPressed: () {
           deviceManager.update();
-          setState((){
-          });
+          setState(() {});
         },
       ),
       trailing: IconButton(
         icon: Icon(Icons.close),
-        onPressed: (){
+        onPressed: () {
           Navigator.pop(context);
         },
       ),
-      title: Text("Devices",// + tiles.length.toString(),
+      title: Text("Devices", // + tiles.length.toString(),
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0)),
     ));
-    if(_devices.length == 0){
-      _listItems.add(new ListTile(title: Text("No Devices.", style: new TextStyle(color: Colors.grey))));
+    if (_devices.length == 0) {
+      _listItems.add(new ListTile(
+          title:
+              Text("No Devices.", style: new TextStyle(color: Colors.grey))));
       return _listItems;
     }
-    for(var i=0; i<_devices.length; i++){
+    for (var i = 0; i < _devices.length; i++) {
       _listItems.add(_buildRow(_devices[i]));
       print(_listItems);
     }
-    setState(() {
-    });
+    setState(() {});
     return _listItems;
   }
 
-  Widget _buildRow(Device d){
+  Widget _buildRow(Device d) {
     return ListTile(
       title: Text(
         d.getCodename(),
@@ -174,3 +168,4 @@ class DeviceListState extends State<DeviceList> {
     );
   }
 }
+
