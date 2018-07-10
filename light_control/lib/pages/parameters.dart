@@ -29,36 +29,24 @@ class ParameterViewState extends State<ParameterView>{
 
   List<int> _colorRGB = [0,0,0];
 
+  ScrollController _scrollController = new ScrollController();
+
   @override
   Widget build(BuildContext context){
     return Container(
       child: ListView(
+        controller: _scrollController,
         children: <Widget>[
           new Card(
             key: _colorPicker,
             child: new Container(
               decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(width: 4.0, color: Theme.of(context).dividerColor),
-              )),
+                border: Border(
+                  bottom: BorderSide(width: 4.0, color: Theme.of(context).dividerColor),
+                ),
+              ),
               child: Column(
                 children: <Widget>[
-                  /*const ListTile(
-                    title: const Text('Basic Control'),
-                  ),*/
-                  /*new Padding(
-                    padding: const EdgeInsets.only(left: 40.0, right: 40.0, top: 0.0, bottom: 10.0),
-                    child: new Container(
-                      decoration: new BoxDecoration(
-                        color: _masterColor,
-                        shape: BoxShape.circle,
-                        border: new Border.all(
-                          color: _masterColor,
-                          width: 10.0,
-                        ),
-                      ),
-                    ),
-                  ),*/
                   ColorPicker(
                     red: 0,
                     blue: 0,
@@ -121,7 +109,7 @@ class ParameterViewState extends State<ParameterView>{
                     child: Text("Intensity: " + _intensitySliderVal.round().toString()),
                   ),
                   new Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 10.0),
                     child: new Row(
                         mainAxisSize: MainAxisSize.max,
                         mainAxisAlignment: MainAxisAlignment.start,
