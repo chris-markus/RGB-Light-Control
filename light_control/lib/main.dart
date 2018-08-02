@@ -34,6 +34,7 @@ class MainState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
+        debugShowCheckedModeBanner: false,
         theme: theme,
         home: Scaffold(
           floatingActionButtonLocation:
@@ -44,9 +45,10 @@ class MainState extends State<MainApp> {
             onPressed: () =>_scaffoldKey.currentState.openDrawer()
           ),
           key: _scaffoldKey,
-          appBar: new AppBar(
-            title: Text("Connected")
-          ),
+          /*appBar: new AppBar(
+            title: Text("Connected"),
+            leading: Text(""),
+          ),*/
           body: new PageView(
             physics: new NeverScrollableScrollPhysics(),
               children: [
@@ -153,7 +155,7 @@ class DeviceListState extends State<DeviceList> {
     }
     for (var i = 0; i < _devices.length; i++) {
       _listItems.add(_buildRow(_devices[i]));
-      print(_listItems);
+      //print(_listItems);
     }
     setState(() {});
     return _listItems;

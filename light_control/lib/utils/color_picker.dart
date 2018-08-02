@@ -13,7 +13,7 @@ class ColorPicker extends StatefulWidget {
 
   final _listenerKey = null;
 
-  final ValueChanged<List<int>> onChanged;
+  final ValueChanged<List<double>> onChanged;
 
   createState() => ColorPickerState();
 }
@@ -22,6 +22,8 @@ double left = 0.0;
 double top = 0.0;
 
 double _pickerWidth = 0.0;
+
+bool hasInit = false;
 
 const double _topPickerPadding = 5.0;
 const double _leftPickerPadding = 40.0;
@@ -44,42 +46,37 @@ class ColorPickerState extends State<ColorPicker>{
     return new Padding(
       padding: const EdgeInsets.symmetric(horizontal: _leftPickerPadding, vertical: _topPickerPadding),
           child: new GestureDetector(
-            onHorizontalDragStart: (DragStartDetails start) =>
-              _onDragStart(context, start),
-            onHorizontalDragUpdate: (DragUpdateDetails update) =>
-                _onDragUpdate(context, update),
-            onVerticalDragStart: (DragStartDetails start) =>
-                _onDragStart(context, start),
-            onVerticalDragUpdate: (DragUpdateDetails update) =>
-                _onDragUpdate(context, update),
-            onTapDown: (TapDownDetails tap) => _onTap(context, tap),
+            onPanStart: (DragStartDetails start) => _onDragStart(context, start),
+            onPanUpdate: (DragUpdateDetails update) => _onDragUpdate(context, update),
             child: Stack(
               key: _stackKey,
                 children: <Widget>[
-                new LayoutBuilder(
-                  builder: (BuildContext context, BoxConstraints constraints) {
-                    _pickerWidth = constraints.maxWidth;
-                    return new Container(
-                      width: 0.0,
-                      height: 0.0
-                    );
-                  },
-                ),
                 Image.asset(
                   "lib/assets/colorWheel.png",
                   fit: BoxFit.fitWidth,
                 ), //etc,
-                Transform(
-                  transform: new Matrix4.translationValues(left, top, 0.0),
-                  child: new Container(
-                    width: _cursorDiameter,
-                    height: _cursorDiameter,
-                    decoration: new BoxDecoration(
-                      color: Color(0xBE2196F3),
-                      shape: BoxShape.circle,
-                    )
-                  )
+                new LayoutBuilder(
+                  builder: (BuildContext context, BoxConstraints constraints) {
+                    _pickerWidth = constraints.maxWidth;
+                    if(!hasInit){
+                      left = _pickerWidth/2 - _cursorDiameter/2;
+                      top = _pickerWidth/2 - 3.0;
+                      hasInit = true;
+                    }
+                    return new Transform(
+                        transform: new Matrix4.translationValues(left, top, 0.0),
+                        child: new Container(
+                            width: _cursorDiameter,
+                            height: _cursorDiameter,
+                            decoration: new BoxDecoration(
+                              color: Color(0xBE2196F3),
+                              shape: BoxShape.circle,
+                            )
+                        )
+                    );
+                  },
                 ),
+
               ],
             ),
           ),
@@ -97,9 +94,6 @@ class ColorPickerState extends State<ColorPicker>{
       newX = centerX + r * ((x - centerX) / dist);
       newY = centerY + r * ((y - centerY) / dist);
     }
-
-    var rgb = _getRGB(newX, newY);
-
     return [newX, newY];
   }
 
@@ -148,8 +142,11 @@ class ColorPickerState extends State<ColorPicker>{
       RGB[i] = (RGB[i] + m) * _COLORMAX;
     }
 
-    //print(RGB);
     return RGB;
+  }
+
+  List<double> _getHSV(){
+
   }
 
   _onDragStart(BuildContext context, DragStartDetails start) {
@@ -160,6 +157,8 @@ class ColorPickerState extends State<ColorPicker>{
     var temp = _insidePicker(tempX, tempY);
     left = temp[0];
     top = temp[1];
+    var rgb = _getRGB(left, top);
+    widget.onChanged(rgb);
     setState(() {});
   }
 
@@ -171,18 +170,16 @@ class ColorPickerState extends State<ColorPicker>{
     var temp = _insidePicker(tempX, tempY);
     left = temp[0];
     top = temp[1];
-    setState(() {});
-  }
-
-  _onTap(BuildContext context, TapDownDetails tap) {
-    RenderBox getBox = context.findRenderObject();
-    var local = getBox.globalToLocal(tap.globalPosition);
-    double tempX = local.dx - _leftPickerPadding - _cursorDiameter/2;
-    double tempY = local.dy - _topPickerPadding - _cursorDiameter/2;
-    var temp = _insidePicker(tempX, tempY);
-    left = temp[0];
-    top = temp[1];
+    var rgb = _getRGB(left, top);
+    widget.onChanged(rgb);
     setState(() {});
   }
 
 }
+
+class HSColor {
+  HSColor(this.hue, this.sat);
+  final double hue;
+  final double sat;
+}
+
