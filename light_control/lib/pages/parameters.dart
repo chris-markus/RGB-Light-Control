@@ -1,11 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:light_control/utils/LColor.dart';
 import 'package:light_control/utils/preset.dart';
 
 import '../utils/color_picker.dart';
 
+LColor color = LColors.white;
+
+List<LColor> presetColors = [LColors.white, LColors.white, LColors.white, LColors.white, LColors.red, LColors.green, LColors.blue, LColors.white];
+List<bool> presetActive = [false, false, false, false, false, false, false, false];
+List<String> presetNames = ["1","2","3","4"];
+
+double _intensitySliderVal = 0.0;
+double _prevIntensityVal = LColor.COLORMAX.toDouble();
+
+bool _intensitySwitch = false;
+
 class ParameterView extends StatefulWidget{
   final Widget parent;
-  ParameterView(this.parent);
+  final onParameterChanged;
+
+  ParameterView(
+    this.parent,
+  {this.onParameterChanged});
 
   @override
   createState() => ParameterViewState();
@@ -15,39 +31,44 @@ class ParameterViewState extends State<ParameterView>{
   final _colorPicker = null;
   final _intensitySlider = null;
 
-  double _intensitySliderVal = 0.0;
-  double _prevIntensityVal = 100.0;
+  bool activeOne = false;
 
-  bool _intensitySwitch = false;
-
-  Color _masterColor = Colors.red;
-
-  List<int> _colorRGB = [0,0,0];
+  Color inactiveColor = Colors.grey;
 
   ScrollController _scrollController = new ScrollController();
 
   @override
+  void initState() {
+    if(presetColors !=null && presetColors.length == 0){
+      for(int i=0; i<8; i++){
+        presetColors.add(LColors.white);
+      }
+    }
+    checkPresets(color);
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context){
+    var phys = new ScrollPhysics();
     return Container(
       child: ListView(
         controller: _scrollController,
+        physics: phys,
         children: <Widget>[
           new Card(
             key: _colorPicker,
             child: new Container(
-              /*decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(width: 4.0, color: Theme.of(context).dividerColor),
-                ),
-              ),*/
               child: Column(
                 children: <Widget>[
                   ColorPicker(
-                    red: 0,
-                    blue: 0,
-                    green: 0,
+                    color: color,
                     onChanged: (_colorRGB){
                       checkPresets(_colorRGB);
+                      color = _colorRGB;
+                      dataChanged();
+                      setState(() {
+                      });
                     },
                   ),
                   new Padding(
@@ -63,14 +84,13 @@ class ParameterViewState extends State<ParameterView>{
                           new Flexible(
                             child: Slider(
                                 min: 0.0,
-                                max: 100.0,
+                                max: LColor.COLORMAX.toDouble(),
                                 key: _intensitySlider,
                                 value: _intensitySliderVal,
                                 onChanged: (double value){
-                                  sliderChanged(value, "b");
-                                  setState(() {
-                                    _intensitySliderVal = value;
-                                  });
+                                  _intensitySliderVal = value;
+                                  setState((){});
+                                  dataChanged();
                                 },
                                 onChangeEnd: (double value){
                                   if(!_intensitySwitch){
@@ -82,7 +102,8 @@ class ParameterViewState extends State<ParameterView>{
                                   else {
                                     _prevIntensityVal = value;
                                   }
-                                  setState(() {});
+                                  setState((){});
+                                  dataChanged();
                                 },
                               ),
                           ),
@@ -94,9 +115,10 @@ class ParameterViewState extends State<ParameterView>{
                               else{
                                 _intensitySliderVal = 0.0;
                               }
+                              _intensitySwitch = !_intensitySwitch;
                               setState(() {
-                                _intensitySwitch = !_intensitySwitch;
                               });
+                              dataChanged();
                             },
                             value: _intensitySwitch,
                           ),
@@ -114,19 +136,36 @@ class ParameterViewState extends State<ParameterView>{
                   mainAxisSize: MainAxisSize.max,
                   children: <Widget>[
                     new Preset(
-                      presetName: "Preset 1",
-                      onTap: (bool e){
-                        print("1 tapped");
-                      },
+                      presetName: presetNames[0],
+                      color: presetColors[0],
+                      activated: presetActive[0],
+                      onDoubleTap: () => presetDoubleTap(0),
+                      onTap: (LColor rgb) => presetTapped(rgb),
+                      onLongPress: () => presetLongPress(0),
                     ),
                     new Preset(
-                      presetName: "Preset 2",
+                      presetName: presetNames[1],
+                      color: presetColors[1],
+                      activated: presetActive[1],
+                      onDoubleTap: () => presetDoubleTap(1),
+                      onTap: (LColor rgb) => presetTapped(rgb),
+                      onLongPress: () => presetLongPress(1),
                     ),
                     new Preset(
-                      presetName: "Preset 3",
+                      presetName: presetNames[2],
+                      color: presetColors[2],
+                      activated: presetActive[2],
+                      onDoubleTap: () => presetDoubleTap(2),
+                      onTap: (LColor rgb) => presetTapped(rgb),
+                      onLongPress: () => presetLongPress(2),
                     ),
                     new Preset(
-                      presetName: "Preset 4",
+                      presetName: presetNames[3],
+                      color: presetColors[3],
+                      activated: presetActive[3],
+                      onDoubleTap: () => presetDoubleTap(3),
+                      onTap: (LColor rgb) => presetTapped(rgb),
+                      onLongPress: () => presetLongPress(3),
                     )
                   ],
                 ),
@@ -134,16 +173,28 @@ class ParameterViewState extends State<ParameterView>{
                   mainAxisSize: MainAxisSize.max,
                   children: <Widget>[
                     new Preset(
-                      presetName: "Preset 5",
+                      presetName: "Red",
+                      color: LColors.red,
+                      activated: presetActive[4],
+                      onTap: (LColor rgb) => presetTapped(rgb),
                     ),
                     new Preset(
-                      presetName: "Preset 6",
+                      presetName: "Green",
+                      color: LColors.green,
+                      activated: presetActive[5],
+                      onTap: (LColor rgb) => presetTapped(rgb),
                     ),
                     new Preset(
-                      presetName: "Preset 7",
+                      presetName: "Blue",
+                      color: LColors.blue,
+                      activated: presetActive[6],
+                      onTap: (LColor rgb) => presetTapped(rgb),
                     ),
                     new Preset(
-                      presetName: "Preset 8",
+                      presetName: "White",
+                      color: LColors.white,
+                      activated: presetActive[7],
+                      onTap: (LColor rgb) => presetTapped(rgb),
                     )
                   ],
                 ),
@@ -155,16 +206,68 @@ class ParameterViewState extends State<ParameterView>{
     );
   }
 
-  void checkPresets(List<double> RGB){
-
+  void presetTapped(LColor rgb) {
+    color = rgb;
+    checkPresets(rgb);
+    setState(() {});
+    dataChanged();
   }
 
-  void sliderChanged(double value, slider){
-
+  void presetLongPress(int prst){
+    presetColors[prst] = color;
+    checkPresets(color);
+    setState(() {});
   }
 
-  void intensityToggled(bool val){
+  void presetDoubleTap(int prst){
+    if(prst > presetNames.length) return;
+    String newName;
+    showDialog(
+        context: context,
+        builder: (BuildContext context){
+          return new AlertDialog(
+              title: Text("Rename \"" + presetNames[prst] + "\""),
+              content: new TextField(
+                decoration: new InputDecoration(
+                    labelText: "New Name"
+                ),
+                onChanged: (String text){
+                  newName = text;
+                },
+              ),
+              actions: [
+                new FlatButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: new Text("Cancel")
+                ),
+                new FlatButton(
+                  onPressed: (){
+                    presetNames[prst] = newName;
+                    setState(() {
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: new Text("Save"),
+                )
+              ]
+          );
+        }
+    );
+  }
 
+  void checkPresets(LColor rgb){
+    for(int i=0; i<8; i++){
+      if(rgb != presetColors[i]){
+        presetActive[i] = false;
+      }
+      else{
+        presetActive[i] = true;
+      }
+    }
+  }
+
+  void dataChanged(){
+    widget.onParameterChanged(color.toHexColor(_intensitySliderVal));
   }
 }
 

@@ -1,85 +1,91 @@
 import 'package:flutter/material.dart';
+import 'package:light_control/utils/LColor.dart';
 
-class Preset extends StatefulWidget {
-
-  @override
-  State<StatefulWidget> createState() => PresetState();
+class Preset extends StatelessWidget {
 
   final String presetName;
-  bool activated;
-  final Color activeColor;
+  final bool activated;
   final Color inactiveColor;
+  final Color activeColor;
+  final LColor color;
   final onTap;
   final onLongPress;
+  final onDoubleTap;
 
   Preset({
     @required String this.presetName,
-    this.activated = false,
-    this.activeColor = Colors.blue,
     this.inactiveColor = Colors.grey,
-    this.onTap = null,
-    this.onLongPress = null
+    this.activeColor = Colors.blue,
+    this.activated = false,
+    this.onTap,
+    this.onLongPress,
+    this.onDoubleTap,
+    this.color = LColors.white
   });
-
-}
-
-class PresetState extends State<Preset> {
 
   @override
   build(BuildContext context){
       return new Expanded(
-        child: new Card(
-            elevation: 3.0,
-            child: Container(
-                child: new CustomPaint(
-                  painter: new CustomPresetPainter(
-                    indicatorColor: (widget.activated? widget.activeColor:widget.inactiveColor),
-                  ),
-                  child: new InkWell(
-                      child: new Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 15.0),
-                            child: new Text(widget.presetName),
-                          )
+          flex: 1,
+            child: new Card(
+                elevation: 3.0,
+                child: Container(
+                    child: new CustomPaint(
+                      painter: new CustomPresetPainter(
+                        presetColor: color.toDartColor(),
+                        indicatorColor: (activated? activeColor : inactiveColor)
                       ),
-                    onTap: (){
-                        widget.activated = !widget.activated;
-                        if(widget.onTap != null) {
-                          widget.onTap(widget.activated);
-                        }
-                        setState(() {
-                        });
-                    },
-                    onLongPress: (){
-                        widget.activated = true;
-                        if(widget.onLongPress != null) {
-                          widget.onLongPress();
-                        }
-                        setState((){
-                        });
-                    },
-                  )
-                ),
-              ),
-        ),
+                      child: new InkWell(
+                          child: new Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 15.0),
+                                child: new Text(presetName),
+                              )
+                          ),
+                        onTapDown: (TapDownDetails d){
+                            if(onTap != null) {
+                              onTap(color);
+                            }
+                        },
+                        onDoubleTap: (){
+                            if(onDoubleTap !=null){
+                              onDoubleTap();
+                            }
+                        },
+                        onLongPress: (){
+                            if(onLongPress != null) {
+                              onLongPress();
+                            }
+                        },
+                      )
+                    ),
+                  ),
+            ),
       );
   }
 }
 
 class CustomPresetPainter extends CustomPainter{
-  final Color indicatorColor;
+  Color indicatorColor;
+  Color presetColor;
   final Paint indicatorPaint;
+  final Paint presetPaint;
 
   CustomPresetPainter({
-    @required this.indicatorColor
+    @required this.indicatorColor,
+    @required this.presetColor,
   }) : indicatorPaint = new Paint()
       ..color = indicatorColor
+      ..style = PaintingStyle.fill,
+     presetPaint = new Paint()
+      ..color = presetColor
       ..style = PaintingStyle.fill;
 
   @override
   void paint(Canvas canvas, Size size) {
-    Rect BottomRect = const Offset(0.0, 0.0) & const Size(double.infinity, 4.0);
-    canvas.drawRect(BottomRect, indicatorPaint);
+    Rect bottomRect = const Offset(0.0, 0.0) & const Size(double.infinity, 4.0);
+    canvas.drawCircle(Offset(0.0,size.height), size.height/2.0, presetPaint);
+    canvas.drawRect(bottomRect, indicatorPaint);
   }
 
   @override
