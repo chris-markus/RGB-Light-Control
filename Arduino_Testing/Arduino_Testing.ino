@@ -19,8 +19,6 @@ const int BAUD_RATE = 9600;
 
 bool hardStop = false;
 
-bool returnBattery = false;
-
 bool lowVolt = false;
 
 int incomingByte = 0;
@@ -55,30 +53,11 @@ void setup() {
   wifiInterface.begin(BAUD_RATE);
 
   //let the user know we're ready
-  startupAnim();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  if(returnBattery){
-    sendBatteryInfo(checkVoltage());
-    returnBattery = false;
-  }
-  if(readColor()){
-    int red, green, blue;
-    if(hexToInts(&red, &green, &blue, color) && fadeTime == "000"){
-      snapTo(red, green, blue);
-      Serial.println(r);
-      Serial.println(g);
-      Serial.println(b);
-    }
-    else{
-      int fadeSec;
-      sscanf(fadeTime, "%02x", &fadeSec);
-      fadeSec /= 10;
-      fadeTo(red, green, blue, fadeSec * 1000);
-    }
-  }
+ Serial.println(checkVoltage());
+ delay(1000); 
 }
 
 boolean readColor(){
@@ -86,7 +65,6 @@ boolean readColor(){
   char incomingByte;
   bool stop = false;
   while(!stop){
-    checkVoltage();
     if(wifiInterface.available()){
       incomingByte = wifiInterface.read();
       if(incomingByte == 10){
@@ -111,9 +89,6 @@ boolean readColor(){
   }
 }
 
-void sendBatteryInfo(double volt){
-  wifiInterface.println(volt);
-}
 
 void startupAnim(){
   int del = 1;
@@ -124,6 +99,26 @@ void startupAnim(){
     }
     for(int i=255;i>=0;i--){
       analogWrite(G_PIN, i);
+      delay(del);
+    }
+  }
+  for(int o = 0; o < 2; o++){
+    for(int i = 0; i<255; i++){
+      analogWrite(R_PIN, i);
+      delay(del);
+    }
+    for(int i=255;i>=0;i--){
+      analogWrite(R_PIN, i);
+      delay(del);
+    }
+  }
+  for(int o = 0; o < 2; o++){
+    for(int i = 0; i<255; i++){
+      analogWrite(B_PIN, i);
+      delay(del);
+    }
+    for(int i=255;i>=0;i--){
+      analogWrite(B_PIN, i);
       delay(del);
     }
   }
@@ -214,11 +209,8 @@ float checkVoltage(){
 }
 
 boolean verifyColor(){
-  if(rawData == "battlevel"){
-    returnBattery = true;
-    return false;
-  }
   for(int i=0; i<PACKET_LENGTH; i++){
+    //a little confusing, but checks if ascii values are 0-9 or a-f, returns false if not
     if(!((rawData[i] >= '0' && rawData[i] <= '9') || (rawData[i] >= 'a' && rawData[i] <= 'f'))){
       return false;
     }

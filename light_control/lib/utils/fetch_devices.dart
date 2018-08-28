@@ -17,7 +17,7 @@ class FetchDevices {
     new Device(new InternetAddress("192.168.1.1"), "fjsh", "Device 4")
   ];
 
-  Socket mainSocket;
+  RawSocket mainSocket;
   bool connected = false;
 
   Device fetch(){
@@ -27,6 +27,7 @@ class FetchDevices {
 
   //Highly experimental:
   void update(){
+    connect((){});
     /*BluetoothDevice newDevice;
     var scanSubscription = flutterBlue.scan().listen((scanResult) {
       newDevice = scanResult.device;
@@ -42,7 +43,7 @@ class FetchDevices {
     });*/
 
     //devices.add(new Device(new InternetAddress("192.168.1.1"), "fjsh", "New Device"));
-
+    /*
     print("test");
     var packet = "lt?";
     var codec = new Utf8Codec();
@@ -59,39 +60,59 @@ class FetchDevices {
       });
       udpSocket.send(encodedPacket, new InternetAddress("192.168.1.1"), 4210);
       print("sentdata");
-    });
+    });*/
+
   }
 
   List<Device> read() {
     return devices;
   }
+
+  /*
   void connect(callback){
-    Socket.connect("192.168.1.1", 21)
+    print("trying to connect");
+    Socket.connect("192.168.1.1", 3481)
         .then((Socket socket){
+          print("connected!");
           mainSocket = socket;
+          connected = true;
           socket.listen(dataHandler,
           onError: errorHandler,
           onDone: doneHandler,
           cancelOnError: false);
+          print("called write");
+          write("test");
           callback();
     })
         .catchError((AsyncError e){
       print("Error: $e");
       connected = false;
     });
+  }*/
+
+
+
+
+  void connect(var callback) async{
+    //mainSocket = RawSocket();
   }
 
   void write(String data){
-    if(connected){
-      if(lastData == data) return;
-      lastData = data;
-      //print(data);
-      //mainSocket.write(data);
-    }
-    else{
-      connect((){});
-    }
+    //mainSocket.write(data);
   }
+
+  /*
+  void write(String data){
+    //if(connected){
+      //if(lastData == data) return;
+      lastData = data;
+      print("sent " + data);
+      mainSocket.write(data);
+    //}
+    /*else{
+      connect((){});
+    }*/
+  }*/
 
   void dataHandler(data){
     print(new String.fromCharCode(data).trim());
@@ -102,8 +123,9 @@ class FetchDevices {
   }
 
   void doneHandler(){
-    mainSocket.destroy();
+    /*mainSocket.destroy();
     connected = false;
+    print("disconnected");*/
   }
 
 }
