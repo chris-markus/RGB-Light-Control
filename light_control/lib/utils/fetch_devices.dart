@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class FetchDevices {
 
@@ -10,134 +12,68 @@ class FetchDevices {
 
   String lastData = "";
 
-  List <Device> devices = [
-    new Device(new InternetAddress("192.168.1.1"), "fjsh", "Device 1"),
-    new Device(new InternetAddress("192.168.1.1"), "fjsh", "Device 2"),
-    new Device(new InternetAddress("192.168.1.1"), "fjsh", "Device 3"),
-    new Device(new InternetAddress("192.168.1.1"), "fjsh", "Device 4")
-  ];
+  List <Device> devices = [];
 
-  RawSocket mainSocket;
-  bool connected = false;
+  WebSocketChannel channel;
 
   Device fetch(){
-    return new Device(new InternetAddress("192.168.1.1"), "fjsh", "hello");
+
   }
 
-
-  //Highly experimental:
   void update(){
-    connect((){});
-    /*BluetoothDevice newDevice;
-    var scanSubscription = flutterBlue.scan().listen((scanResult) {
-      newDevice = scanResult.device;
-      // do something with scan result
-    });
-    Timer(new Duration(seconds: 5), (){
-      var deviceConnection = flutterBlue.connect(newDevice).listen((s) {
-        if(s == BluetoothDeviceState.connected) {
-          scanSubscription.cancel();
-          devices.add(Device(InternetAddress("192.168.1.1"), newDevice.toString()));
-        }
-      });
-    });*/
+    if(devices.length == 0){
+      devices.add(new Device('ws://192.168.1.1:81/', "mac"));
+    }
+    connect();
+  }
 
-    //devices.add(new Device(new InternetAddress("192.168.1.1"), "fjsh", "New Device"));
-    /*
-    print("test");
-    var packet = "lt?";
-    var codec = new Utf8Codec();
-    List<int> encodedPacket = codec.encode(packet);
-    var listeningAddresses = InternetAddress.anyIPv4;
-    int listeningPort = 3996;
-    RawDatagramSocket.bind(listeningAddresses, listeningPort)
-    .then((RawDatagramSocket udpSocket) {
-      udpSocket.listen((RawSocketEvent e){
-        if(e == RawSocketEvent.read) {
-          Datagram dg = udpSocket.receive();
-          dg.data.forEach((x) => print(x));
-        }
-      });
-      udpSocket.send(encodedPacket, new InternetAddress("192.168.1.1"), 4210);
-      print("sentdata");
-    });*/
-
+  void connect(){
+    for(int i=0; i<devices.length; i++){
+      devices[i].connect();
+    }
   }
 
   List<Device> read() {
     return devices;
   }
 
-  /*
-  void connect(callback){
-    print("trying to connect");
-    Socket.connect("192.168.1.1", 3481)
-        .then((Socket socket){
-          print("connected!");
-          mainSocket = socket;
-          connected = true;
-          socket.listen(dataHandler,
-          onError: errorHandler,
-          onDone: doneHandler,
-          cancelOnError: false);
-          print("called write");
-          write("test");
-          callback();
-    })
-        .catchError((AsyncError e){
-      print("Error: $e");
-      connected = false;
-    });
-  }*/
-
-
-
-
-  void connect(var callback) async{
-    //mainSocket = RawSocket();
-  }
-
   void write(String data){
-    //mainSocket.write(data);
-  }
-
-  /*
-  void write(String data){
-    //if(connected){
-      //if(lastData == data) return;
-      lastData = data;
-      print("sent " + data);
-      mainSocket.write(data);
-    //}
-    /*else{
-      connect((){});
-    }*/
-  }*/
-
-  void dataHandler(data){
-    print(new String.fromCharCode(data).trim());
-  }
-
-  void errorHandler(error, StackTrace trace){
-    print(error);
-  }
-
-  void doneHandler(){
-    /*mainSocket.destroy();
-    connected = false;
-    print("disconnected");*/
+    for(int i=0; i<devices.length; i++){
+      devices[i].sendData(data);
+    }
   }
 
 }
 
 class Device {
   bool active = false;
-  final InternetAddress ip;
+  final String ip;
+  WebSocketChannel channel;
   String codename;
   final mac;
   Device(this.ip, this.mac, [this.codename]){
     if(this.codename == null){
       this.codename = "Unnamed";
+    }
+  }
+  void toggleActive(){
+    if(active){
+      active = false;
+      channel.sink.close();
+    }
+    else{
+      active = true;
+      connect();
+    }
+  }
+  void connect(){
+    if(active) {
+      channel = IOWebSocketChannel.connect('ws://192.168.1.1:81/');
+    }
+  }
+  void sendData(String data){
+    if(active){
+      channel.sink.add(data);
     }
   }
   void setCodename(codename){
@@ -149,6 +85,7 @@ class Device {
   void flash(){
     print(codename + " flashed");
   }
+
 }
 
 /*

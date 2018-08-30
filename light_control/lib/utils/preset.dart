@@ -42,7 +42,7 @@ class Preset extends StatelessWidget {
                                 child: new Text(presetName),
                               )
                           ),
-                        onTapDown: (TapDownDetails d){
+                        onTap: (){
                             if(onTap != null) {
                               onTap(color);
                             }

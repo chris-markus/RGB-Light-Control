@@ -267,7 +267,8 @@ class ParameterViewState extends State<ParameterView>{
   }
 
   void dataChanged(){
-    widget.onParameterChanged("000" + color.toHexColor(_intensitySliderVal));
+    //widget.onParameterChanged("000" + color.toHexColor(_intensitySliderVal));
+    widget.onParameterChanged("#" + color.toHexColor(_intensitySliderVal));
   }
 }
 

@@ -22,9 +22,9 @@ class LColor{
     int newRed = (red * intensity).round();
     int newGreen = (green * intensity).round();
     int newBlue = (blue * intensity).round();
-    return newRed.toRadixString(16).padLeft(2, '0') +
-           newGreen.toRadixString(16).padLeft(2, '0') +
-           newBlue.toRadixString(16).padLeft(2, '0');
+    var rgb = newRed << 20 | newGreen << 10 | newBlue;
+    var rgbstr = rgb.toRadixString(16);
+    return rgbstr;
   }
 }
 

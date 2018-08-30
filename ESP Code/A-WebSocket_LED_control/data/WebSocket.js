@@ -1,4 +1,7 @@
-var rainbowEnable = false;
+
+var intensity = 0;
+var lastIntensity = 255;
+var intensityBool = false;
 var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
 connection.onopen = function () {
     connection.send('Connect ' + new Date());
@@ -13,10 +16,18 @@ connection.onclose = function(){
     console.log('WebSocket connection closed');
 };
 
-function sendRGB() {
-    var r = document.getElementById('r').value**2/255;
-    var g = document.getElementById('g').value**2/255;
-    var b = document.getElementById('b').value**2/255;
+function sendRGB(intTap) {
+	intensity = (document.getElementById('i').value);
+	if(!intTap && intensity>0 && !intensityBool){
+		toggleInt();
+	}
+	else if(!intTap && intensity == 0 && intensityBool){
+		lastIntensity = 255;
+		toggleInt();
+	}
+    var r = (document.getElementById('r').value**2/255)*(intensity/255);
+    var g = (document.getElementById('g').value**2/255)*(intensity/255);
+    var b = (document.getElementById('b').value**2/255)*(intensity/255);
     
     var rgb = r << 20 | g << 10 | b;
     var rgbstr = '#'+ rgb.toString(16);    
@@ -24,26 +35,19 @@ function sendRGB() {
     connection.send(rgbstr);
 }
 
-function rainbowEffect(){
-    rainbowEnable = ! rainbowEnable;
-    if(rainbowEnable){
-        connection.send("R");
-        document.getElementById('rainbow').style.backgroundColor = '#00878F';
-        document.getElementById('r').className = 'disabled';
-        document.getElementById('g').className = 'disabled';
-        document.getElementById('b').className = 'disabled';
-        document.getElementById('r').disabled = true;
-        document.getElementById('g').disabled = true;
-        document.getElementById('b').disabled = true;
+function toggleInt(){
+    intensityBool = ! intensityBool;
+    if(intensityBool){
+			intensity = lastIntensity;
+			document.getElementById('i').value = lastIntensity;
+        document.getElementById('intButton').style.backgroundColor = '#00878F';
+			sendRGB(true);
+        
     } else {
-        connection.send("N");
-        document.getElementById('rainbow').style.backgroundColor = '#999';
-        document.getElementById('r').className = 'enabled';
-        document.getElementById('g').className = 'enabled';
-        document.getElementById('b').className = 'enabled';
-        document.getElementById('r').disabled = false;
-        document.getElementById('g').disabled = false;
-        document.getElementById('b').disabled = false;
-        sendRGB();
+			lastIntensity = intensity;
+			intensity = 0;
+			document.getElementById('i').value = 0;
+        document.getElementById('intButton').style.backgroundColor = '#999';
+        sendRGB(true);
     }  
 }

@@ -284,7 +284,7 @@ class DeviceListState extends State<DeviceList> {
     return Column(children: [
       ListTile(
         onTap: () {
-          d.active = !d.active;
+          d.toggleActive();
           setState(() {});
         },
         onLongPress: () => showDialog(
