@@ -17,18 +17,16 @@ const int led = LED_BUILTIN;
 const int PACKET_LENGTH = 9;
 const int BAUD_RATE = 9600;
 
-bool hardStop = false;
-
 bool returnBattery = false;
 
 bool lowVolt = false;
 
 int incomingByte = 0;
 
-float cutoffVoltage = 6.3;
+double cutoffVoltage = 6.3;
 
 //char arrays
-char rawData[6];
+char rawData[9];
 char color[6];
 char fadeTime[3];
 
@@ -54,6 +52,9 @@ void setup() {
   Serial.begin(9600);
   wifiInterface.begin(BAUD_RATE);
 
+  delay(20);
+  wifiInterface.print("test");
+
   //let the user know we're ready
   startupAnim();
 }
@@ -66,17 +67,12 @@ void loop() {
   }
   if(readColor()){
     int red, green, blue;
-    if(hexToInts(&red, &green, &blue, color) && fadeTime == "000"){
+    double fadeTimeDouble = getFadeTime();
+    if(hexToInts(&red, &green, &blue, color) && fadeTimeDouble == 0.0){
       snapTo(red, green, blue);
-      Serial.println(r);
-      Serial.println(g);
-      Serial.println(b);
     }
     else{
-      int fadeSec;
-      sscanf(fadeTime, "%02x", &fadeSec);
-      fadeSec /= 10;
-      fadeTo(red, green, blue, fadeSec * 1000);
+      fadeTo(red, green, blue, (long)(fadeTimeDouble * 1000.0));
     }
   }
 }
@@ -90,12 +86,12 @@ boolean readColor(){
     if(wifiInterface.available()){
       incomingByte = wifiInterface.read();
       if(incomingByte == 10){
-        if(dataCounter == PACKET_LENGTH && verifyColor()){
-          for(int i=0; i<4; i++){
+        if(((dataCounter - 1) == PACKET_LENGTH) && verifyColor()){
+          for(int i=0; i<3; i++){
             fadeTime[i] = rawData[i];
           }
-          for(int i=4; i<PACKET_LENGTH; i++){
-            color[i] = rawData[i];
+          for(int i=3; i<PACKET_LENGTH; i++){
+            color[i-3] = rawData[i];
           }
           return true;
         }
@@ -106,6 +102,10 @@ boolean readColor(){
       else{
         rawData[dataCounter] = incomingByte;
         dataCounter ++;
+        if(dataCounter > PACKET_LENGTH + 1){
+          wifiInterface.flush();
+          return false;
+        }
       }
     }
   }
@@ -143,33 +143,31 @@ void errorAnim(){
   }
 }
 
-void fadeTo(int red, int green, int blue, int duration){
+void fadeTo(int red, int green, int blue, long duration){
   int steps = abs(r - red);
   int gSteps = green - g;
   int rSteps = red - r;
   int bSteps = blue - b;
-  float rDub = (float)r;
-  float gDub = (float)g;
-  float bDub = (float)b;
+  double rDub = (double)r;
+  double gDub = (double)g;
+  double bDub = (double)b;
   if(abs(gSteps) > steps){
     steps = abs(gSteps);
   }
   if(abs(bSteps) > steps){
     steps = abs(bSteps);
   }
+  int del = abs(duration / steps);
   for(int i=0; i<steps; i++){
-    if(hardStop){
-      hardStop = false;
-      break;
-    }
-    rDub += (((float)rSteps)/((float)steps));
-    gDub += (((float)gSteps)/((float)steps));
-    bDub += (((float)bSteps)/((float)steps));
-    r = (int)rDub;
-    g = (int)gDub;
-    b = (int)bDub;
+    checkVoltage();
+    rDub += (((double)rSteps)/((double)steps));
+    gDub += (((double)gSteps)/((double)steps));
+    bDub += (((double)bSteps)/((double)steps));
+    r = (int)(floor(rDub));
+    g = (int)(floor(gDub));
+    b = (int)(floor(bDub));
     writeColor();
-    delay(abs(duration / steps));
+    delay(del);
   }
   //make sure we actually got to the right color:
   r = red;
@@ -180,6 +178,7 @@ void fadeTo(int red, int green, int blue, int duration){
 
 void writeColor(){
   if(!lowVolt){
+    //Serial.print(r); Serial.print(", "); Serial.print(g); Serial.print(", "); Serial.println(b);
     analogWrite(R_PIN, r);
     analogWrite(G_PIN, g);
     analogWrite(B_PIN, b);
@@ -198,8 +197,17 @@ void snapTo(int red, int green, int blue){
   writeColor();
 }
 
-float checkVoltage(){
-  float voltage = 2 * (5.0 / 1023.0) * analogRead(V_PIN);
+double getFadeTime(){
+  int fadeTemp;
+  double fadeSec = 0.0;
+  sscanf(fadeTime, "%03x", &fadeTemp);
+  fadeSec = fadeTemp / 10.0;
+  //Serial.println(fadeSec);
+  return fadeSec;
+}
+
+double checkVoltage(){
+  double voltage = 2 * (5.0 / 1023.0) * analogRead(V_PIN);
   if(voltage < cutoffVoltage){
     lowVolt = true;
     r = 0;
@@ -214,7 +222,15 @@ float checkVoltage(){
 }
 
 boolean verifyColor(){
-  if(rawData == "battlevel"){
+  //Serial.print(rawData);
+  char match[] = {'b','a','t','t','l','e','v','e','l'};
+  boolean tf = true;
+  for(int i=0; i<PACKET_LENGTH; i++){
+    if(match[i] != rawData[i]){
+      tf = false;
+    }
+  }
+  if(tf){
     returnBattery = true;
     return false;
   }

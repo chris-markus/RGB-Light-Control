@@ -23,7 +23,7 @@ const char *password = "lightbar";   // The password required to connect to it, 
 const char *OTAName = "ESP8266";           // A name and a password for the OTA service
 const char *OTAPassword = "esp8266";
 
-const char* mdnsName = "esp8266"; // Domain name for the mDNS responder
+const char* mdnsName = "lightbar"; // Domain name for the mDNS responder
 
 /*__________________________________________________________SETUP__________________________________________________________*/
 
@@ -58,15 +58,6 @@ void loop() {
   webSocket.loop();                           // constantly check for websocket events
   server.handleClient();                      // run the server
   ArduinoOTA.handle();                        // listen for OTA events
-
-  if(rainbow) {                               // if the rainbow effect is turned on
-    if(millis() > prevMillis + 32) {          
-      if(++hue == 360)                        // Cycle through the color wheel (increment by one degree every 32 ms)
-        hue = 0;
-      setHue(hue);                            // Set the RGB LED to the right color
-      prevMillis = millis();
-    }
-  }
 }
 
 /*__________________________________________________________SETUP_FUNCTIONS__________________________________________________________*/
@@ -101,8 +92,8 @@ void startWiFi() {
   Serial.println("\r\n");*/
 }
 
-void printColor(int r, int g, int b){
-  Serial.println("000" + padLeft(String(r, HEX), 2, "0") + padLeft(String(g, HEX), 2, "0") + padLeft(String(b, HEX), 2, "0"));
+void printColor(int t, int r, int g, int b){
+  Serial.println(padLeft(String(t, HEX), 3, "0") + padLeft(String(r, HEX), 2, "0") + padLeft(String(g, HEX), 2, "0") + padLeft(String(b, HEX), 2, "0"));
 }
 
 String padLeft(String inpt, int len, String toAdd){
@@ -120,7 +111,7 @@ void startOTA() { // Start the OTA service
 
   ArduinoOTA.onStart([]() {
     //Serial.println("Start");
-    printColor(0,0,0);
+    printColor(0,0,0,0);
   });
   ArduinoOTA.onEnd([]() {
     //Serial.println("\r\nEnd");
@@ -248,15 +239,14 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
     case WStype_TEXT:                     // if new text data is received
       if (payload[0] == '#') {            // we get RGB data
         uint32_t rgb = (uint32_t) strtol((const char *) &payload[1], NULL, 16);   // decode rgb data
-        int r = ((rgb >> 20) & 0x3FF);                     // 10 bits per color, so R: bits 20-29
-        int g = ((rgb >> 10) & 0x3FF);                     // G: bits 10-19
-        int b =          rgb & 0x3FF;                      // B: bits  0-9
+        int t = ((rgb >> 24) & 0x3FF);
+        int r = ((rgb >> 16) & 0x2FF);                     // 10 bits per color, so R: bits 20-29
+        int g = ((rgb >> 8) & 0x2FF);                     // G: bits 10-19
+        int b =          rgb & 0x2FF;                      // B: bits  0-9
 
-        printColor(r, g, b);
-      } else if (payload[0] == 'R') {                      // the browser sends an R when the rainbow effect is enabled
-        rainbow = true;
-      } else if (payload[0] == 'N') {                      // the browser sends an N when the rainbow effect is disabled
-        rainbow = false;
+        printColor(t, r, g, b);
+      } else if (payload[0] == 'B') {
+        Serial.println("battlevel");
       }
       break;
   }
@@ -307,5 +297,5 @@ void setHue(int hue) { // Set the RGB LED to a given hue (color) (0° = Red, 120
   int g = gf*gf*1023;
   int b = bf*bf*1023;
   
-  printColor(r, g, b);
+  printColor(0, r, g, b);
 }

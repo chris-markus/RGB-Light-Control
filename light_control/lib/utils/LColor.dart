@@ -26,6 +26,15 @@ class LColor{
     var rgbstr = rgb.toRadixString(16);
     return rgbstr;
   }
+  String toExpHexColor(double intensity){
+    intensity /= COLORMAX;
+    int newRed = (red*red/COLORMAX * intensity).round();
+    int newGreen = (green*green/COLORMAX * intensity).round();
+    int newBlue = (blue*blue/COLORMAX * intensity).round();
+    var rgb = newRed << 20 | newGreen << 10 | newBlue;
+    var rgbstr = rgb.toRadixString(16);
+    return rgbstr;
+  }
 }
 
 class LColors{
