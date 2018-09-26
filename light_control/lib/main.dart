@@ -45,7 +45,9 @@ class MainState extends State<MainApp> {
     return new MaterialApp(
         routes: <String, WidgetBuilder>{
           '/settings': (BuildContext context) =>
-              new Settings(parentContext: context)
+              new Settings(parentContext: context),
+          '/animationList': (BuildContext context) =>
+            new AnimationList(parentContext: context),
         },
         debugShowCheckedModeBanner: false,
         theme: theme,
@@ -66,7 +68,7 @@ class MainState extends State<MainApp> {
                   new Scaffold(
                     appBar: AppBar(
                         centerTitle: true,
-                        title: Text(""),
+                        title: Text("Live Control"),
                         leading: IconButton(
                             icon: Icon(Icons.devices),
                             onPressed: () => _scaffoldKey.currentState.openDrawer()
@@ -156,8 +158,13 @@ class AnimationsFlowState extends State<AnimationsFlow> {
     return new Scaffold(
       appBar: AppBar(
           centerTitle: true,
-          title: Text("Animation"),
-          leading: Text(""),
+          title: Text("Animation Editor"),
+          leading: IconButton(
+              icon: Icon(Icons.view_list),
+              onPressed: (){
+                Navigator.pushNamed(mainContext, "/animationList");
+              }
+          ),
           actions: [
             IconButton(
               icon: Icon(Icons.settings),

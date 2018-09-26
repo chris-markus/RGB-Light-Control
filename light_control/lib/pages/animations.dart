@@ -4,9 +4,149 @@ import 'package:light_control/uipartials/color_circle.dart';
 import 'package:light_control/utils/LColor.dart';
 import 'package:light_control/utils/color_picker.dart';
 
+class AnimationList extends StatefulWidget{
+
+  final BuildContext parentContext;
+  const AnimationList({
+    Key key,
+    @required this.parentContext
+  }) : super(key: key);
+
+  @override
+  AnimationListState createState() {
+    return new AnimationListState();
+  }
+
+}
+
+class AnimationListState extends State<AnimationList>{
+  List<AnimationShortWidget> animationWidgets =[];
+
+  @override
+  Widget build(BuildContext context) {
+
+    Widget newAnimation = InkWell(
+      onTap: (){
+        //TODO: Implement animation adding
+      },
+      child: new Row(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Text(
+                  "+ New Animation",
+                  style: new TextStyle(fontSize: 16.0, color: Colors.grey)),
+            ),
+          ]
+      ),
+    );
+
+    for(int i = 0; i<4; i++){
+      AnimationShort anim = new AnimationShort([new Keyframe(time: 10.0)]);
+      anim.name = "Animation " + i.toString();
+      animationWidgets.add(
+          AnimationShortWidget(
+            animation: anim,
+            name: anim.name,
+            tapAnimation: (AnimationShort anim){
+              Navigator.of(widget.parentContext).pop();
+              //TODO: Change displayed keyframes here!
+            },
+          )
+      );
+    }
+
+    List<Widget> renderWidgets = [];
+    renderWidgets.addAll(animationWidgets);
+    renderWidgets.add(newAnimation);
+    return Scaffold(
+      appBar: new AppBar(
+        centerTitle: true,
+        title: Text("Animations"),
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left),
+          onPressed: (){
+            Navigator.of(widget.parentContext).pop();
+          },
+        ),
+      ),
+      body: new ListView(
+        children: renderWidgets,
+      ),
+    );
+  }
+}
+
+class AnimationShort{
+  List<Keyframe> keyframes;
+  String name;
+  AnimationShort(this.keyframes);
+  GlobalKey widgetKey = new GlobalKey();
+}
+
+class AnimationShortWidget extends StatelessWidget{
+
+  final AnimationShort animation;
+  final GlobalKey key;
+  final String name;
+  final ValueChanged<AnimationShort> tapAnimation;
+
+  const AnimationShortWidget({
+    this.animation,
+    this.key,
+    @required this.name,
+    this.tapAnimation,
+  }) : super(key:key);
+
+  @override
+  Widget build(BuildContext context) {
+    TextStyle textStyle = new TextStyle(fontSize: 16.0, color: Colors.black54);
+
+    return Container(
+      decoration: new BoxDecoration(
+        border: Border(bottom: BorderSide(color: Colors.black12, width: 0.5)),
+      ),
+      child: new InkWell(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: new Row(
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Expanded(
+                flex: 4,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Text(
+                    name,
+                    style: textStyle,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: (){},
+                icon: Icon(Icons.delete_forever),
+                iconSize: 20.0,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class AnimationView extends StatefulWidget {
 
-  AnimationView();
+  final GlobalKey key;
+  final List<Keyframe> keyframes;
+
+  AnimationView({
+    this.key,
+    this.keyframes
+  }):super(key: key);
 
   @override
   createState() => AnimationViewState();
@@ -17,9 +157,19 @@ GlobalKey keyframeKey;
 
 class AnimationViewState extends State<AnimationView> {
 
-  List<Keyframe> keyframes = [];
+  List<Keyframe> keyframes;
 
   TextStyle headingStyle = new TextStyle(fontSize: 16.0, color: Colors.black54);
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    keyframes = widget.keyframes;
+    if(keyframes == null){
+      keyframes = [];
+    }
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
