@@ -8,85 +8,97 @@ import 'package:light_control/utils/LColor.dart';
 double left = 0.0;
 double top = 0.0;
 
-class ColorPicker extends StatefulWidget {
-  ColorPicker({Key key, @required this.color, @required this.onChanged})
-      : super(key: key);
-
-  final LColor color;
-
-  final ValueChanged<LColor> onChanged;
-
-  createState() => ColorPickerState();
-}
-
-
 double _pickerWidth = 0.0;
-
-bool hasInit = false;
 
 const double _topPickerPadding = 5.0;
 const double _leftPickerPadding = 40.0;
 const double _cursorDiameter = 12.0;
 
+class ColorPicker extends StatefulWidget {
+  ColorPicker({Key key,
+    @required this.color,
+    @required this.onChanged,
+    this.onPointerDown,
+    this.onPointerUp})
+      : super(key: key);
+
+  final LColor color;
+
+  final onPointerDown;
+  final onPointerUp;
+
+  final ValueChanged<LColor> onChanged;
+
+  createState() {
+    //hasInit = false;
+    return ColorPickerState();
+  }
+}
+
 class ColorPickerState extends State<ColorPicker>{
 
   Widget build(BuildContext context) {
-    final logicalSize = MediaQuery.of(context).size;
-    final double _width = logicalSize.width;
-    final double _height = logicalSize.height;
-
-    var tempPos = getPos(widget.color);
-    left = tempPos[0];
-    top = tempPos[1];
-
     return new Padding(
       padding: const EdgeInsets.symmetric(horizontal: _leftPickerPadding, vertical: _topPickerPadding),
-          child: new GestureDetector(
-            onPanStart: (DragStartDetails start) => _onDragStart(context, start),
-            onPanUpdate: (DragUpdateDetails update) => _onDragUpdate(context, update),
-            onPanDown: (DragDownDetails start) => _onDragDown(context, start),
-            //onVerticalDragStart: (DragStartDetails start) => _onDragStart(context, start),
-            //onVerticalDragUpdate: (DragUpdateDetails update) => _onDragUpdate(context, update),
-            //onVerticalDragDown: (DragDownDetails start) => _onDragDown(context, start),
-            child: Stack(
-              key: widget.key,
-                children: <Widget>[
-                Image.asset(
-                  "lib/assets/colorWheel.png",
-                  fit: BoxFit.fitWidth,
-                ), //etc,
-                Positioned(
-                  bottom: 0.0,
-                  child: new ColorCircle(
-                    color: widget.color,
+          child: new Listener(
+            onPointerDown: (PointerDownEvent start) {
+              if(widget.onPointerDown != null) {
+                widget.onPointerDown();
+              }
+              _onDragUpdate(context, start);
+            },
+            onPointerMove: (PointerMoveEvent update){
+              if(widget.onPointerDown != null) {
+                widget.onPointerDown();
+              }
+              _onDragUpdate(context, update);
+            },
+            onPointerCancel: (PointerEvent e){
+              if(widget.onPointerUp != null) {
+                widget.onPointerUp();
+              }
+            },
+            onPointerUp: (PointerEvent e){
+              if(widget.onPointerUp != null) {
+                widget.onPointerUp();
+              }
+            },
+            behavior: HitTestBehavior.opaque,
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints){
+                _pickerWidth = constraints.maxWidth;
+                var tempPos = getPos(widget.color);
+                left = tempPos[0];
+                top = tempPos[1];
+                return new CustomPaint(
+                  painter: new CustomPickerPainter(),
+                  child: Stack(
+                    key: widget.key,
+                    children: <Widget>[
+                      Image.asset(
+                        "lib/assets/colorWheel.png",
+                        fit: BoxFit.fitWidth,
+                      ),
+                      Positioned(
+                        bottom: 0.0,
+                        child: new ColorCircle(
+                          color: widget.color,
+                        ),
+                      ),
+                      new CustomPaint(
+                          painter: new CustomPointerPainter(
+                              xPos: left,
+                              yPos: top,
+                              diameter: _cursorDiameter
+                          )
+                      )
+                    ],
                   ),
-                ),
-                new LayoutBuilder(
-                  builder: (BuildContext context, BoxConstraints constraints) {
-                    _pickerWidth = constraints.maxWidth;
-                    if(!hasInit){
-                      left = _pickerWidth/2 - _cursorDiameter/2;
-                      top = _pickerWidth/2 - _cursorDiameter/2;
-                      hasInit = true;
-                    }
-                    return new Transform(
-                        transform: new Matrix4.translationValues(left, top, 0.0),
-                        child: new Container(
-                            width: _cursorDiameter,
-                            height: _cursorDiameter,
-                            decoration: new BoxDecoration(
-                              color: Color(0xBE2196F3),
-                              shape: BoxShape.circle,
-                            )
-                        )
-                    );
-                  },
-                ),
-
-              ],
+                );
+              }
+              )
             ),
-          ),
-    );
+          );
   }
 
  List<double> _insidePicker(double x, double y){
@@ -202,25 +214,9 @@ class ColorPickerState extends State<ColorPicker>{
     return [x, y];
   }
 
-  _onDragStart(BuildContext context, DragStartDetails start) {
+  _onDragUpdate(BuildContext context, PointerEvent update) {
     RenderBox getBox = context.findRenderObject();
-    var local = getBox.globalToLocal(start.globalPosition);
-    double tempX = local.dx - _leftPickerPadding - _cursorDiameter/2;
-    double tempY = local.dy - _topPickerPadding - _cursorDiameter/2;
-    _locationChange(tempX, tempY);
-  }
-
-  _onDragDown(BuildContext context, DragDownDetails start) {
-    RenderBox getBox = context.findRenderObject();
-    var local = getBox.globalToLocal(start.globalPosition);
-    double tempX = local.dx - _leftPickerPadding - _cursorDiameter/2;
-    double tempY = local.dy - _topPickerPadding - _cursorDiameter/2;
-    _locationChange(tempX, tempY);
-  }
-
-  _onDragUpdate(BuildContext context, DragUpdateDetails update) {
-    RenderBox getBox = context.findRenderObject();
-    var local = getBox.globalToLocal(update.globalPosition);
+    var local = getBox.globalToLocal(update.position);
     double tempX = local.dx - _leftPickerPadding - _cursorDiameter/2;
     double tempY = local.dy - _topPickerPadding - _cursorDiameter/2;
     _locationChange(tempX, tempY);
@@ -234,12 +230,66 @@ class ColorPickerState extends State<ColorPicker>{
     widget.onChanged(rgb);
   }
 
-  void set(){
-    setState(() {
-    });
+}
+
+class CustomPointerPainter extends CustomPainter{
+
+  final Paint pointerPaint;
+  double xPos;
+  double yPos;
+  final double diameter;
+  final Color pointerColor;
+
+  CustomPointerPainter({
+    this.xPos,
+    this.yPos,
+    @required this.diameter,
+    this.pointerColor = Colors.blue
+  }) : pointerPaint = new Paint()
+    ..color = pointerColor
+    ..style = PaintingStyle.fill;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawCircle(Offset(xPos +diameter/2,yPos + diameter/2), diameter/2, pointerPaint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPointerPainter oldDelegate) {
+    return oldDelegate.xPos != xPos || oldDelegate.yPos != yPos;
   }
 
 }
 
+class CustomPickerPainter extends CustomPainter{
+
+  final Paint pickerPaint;
+  final bool shadow;
+  final Color borderColor;
+  final Path circle = new Path();
+
+  CustomPickerPainter({
+    this.shadow,
+    this.borderColor = Colors.white,
+  }) : pickerPaint = new Paint()
+    ..color = borderColor
+    ..strokeWidth = 3.0
+    ..style = PaintingStyle.stroke;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    Offset center = new Offset(size.width/2, size.width/2);
+    circle.addOval(new Rect.fromCircle(center: center, radius: size.width/2));
+    canvas.drawShadow(circle, Colors.black45, 3.0, true);
+    canvas.drawCircle(center, size.width/2, pickerPaint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPickerPainter oldDelegate) {
+    return borderColor != oldDelegate.borderColor || shadow != oldDelegate.shadow;
+  }
+
+
+}
 
 

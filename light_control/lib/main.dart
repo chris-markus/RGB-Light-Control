@@ -66,7 +66,7 @@ class MainState extends State<MainApp> {
                   new Scaffold(
                     appBar: AppBar(
                         centerTitle: true,
-                        title: Text("Connected"),
+                        title: Text(""),
                         leading: IconButton(
                             icon: Icon(Icons.devices),
                             onPressed: () => _scaffoldKey.currentState.openDrawer()
@@ -86,29 +86,7 @@ class MainState extends State<MainApp> {
                       onParameterChanged: (String data) => deviceManager.write(data),
                     )
                   ),
-                  new Scaffold(
-                    appBar: AppBar(
-                        centerTitle: true,
-                        title: Text("Animations"),
-                        leading: Text(""),
-                        actions: [
-                          IconButton(
-                            icon: Icon(Icons.settings),
-                            onPressed: () {
-                              //deviceManager.connect((){deviceManager.write("FFFFFF");});
-                              Navigator.pushNamed(mainContext, "/settings");
-                            },
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.save),
-                            onPressed: () {
-                              print("save");
-                            },
-                          )
-                        ]
-                    ),
-                    body: AnimationView(),
-                  ),
+                  new AnimationsFlow(),
                 ],
                 controller: _pageController,
                 onPageChanged: (int page){
@@ -155,6 +133,55 @@ class MainState extends State<MainApp> {
   void dispose() {
     super.dispose();
     _pageController.dispose();
+  }
+}
+
+class AnimationsFlow extends StatefulWidget {
+  const AnimationsFlow({
+    Key key,
+  }) : super(key: key);
+
+  @override
+  AnimationsFlowState createState() {
+    return new AnimationsFlowState();
+  }
+}
+
+class AnimationsFlowState extends State<AnimationsFlow> {
+
+  bool playing = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return new Scaffold(
+      appBar: AppBar(
+          centerTitle: true,
+          title: Text("Animation"),
+          leading: Text(""),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.settings),
+              onPressed: () {
+                Navigator.pushNamed(mainContext, "/settings");
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.save),
+              onPressed: () {
+                print("save");
+              },
+            )
+          ]
+      ),
+      floatingActionButton: new FloatingActionButton(
+          child: Icon(playing ? Icons.pause : Icons.play_arrow),
+          onPressed: (){
+            playing = !playing;
+            setState(() {});
+          }
+      ),
+      body: AnimationView(),
+    );
   }
 }
 

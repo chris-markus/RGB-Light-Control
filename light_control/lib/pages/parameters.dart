@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:light_control/utils/LColor.dart';
 import 'package:light_control/utils/preset.dart';
 
@@ -35,7 +36,7 @@ class ParameterViewState extends State<ParameterView>{
 
   Color inactiveColor = Colors.grey;
 
-  ScrollController _scrollController = new ScrollController();
+  bool scroll = true;
 
   @override
   void initState() {
@@ -50,11 +51,10 @@ class ParameterViewState extends State<ParameterView>{
 
   @override
   Widget build(BuildContext context){
-    var phys = new ScrollPhysics();
     return Container(
       child: ListView(
-        controller: _scrollController,
-        physics: phys,
+        //controller: _scrollController,
+        //physics: CustomScrollPhysics();
         children: <Widget>[
           new Card(
             key: _colorPicker,
@@ -63,6 +63,18 @@ class ParameterViewState extends State<ParameterView>{
                 children: <Widget>[
                   ColorPicker(
                     color: color,
+                    onPointerDown: (){
+                      print("down");
+                      setState(() {
+                        scroll = false;
+                      });
+                    },
+                    onPointerUp: (){
+                      print("up");
+                      setState(() {
+                        scroll = true;
+                      });
+                    },
                     onChanged: (_colorRGB){
                       checkPresets(_colorRGB);
                       color = _colorRGB;
@@ -272,3 +284,82 @@ class ParameterViewState extends State<ParameterView>{
   }
 }
 
+
+
+
+
+class IntensitySwitch extends StatefulWidget {
+
+  final int intensity;
+  final bool on;
+  final Color activeColor;
+  final Color inactiveColor;
+  final onTap;
+
+  final int minDragDist;
+
+  IntensitySwitch({
+    @required this.intensity,
+    @required this.on,
+    this.activeColor = Colors.blue,
+    this.inactiveColor = Colors.grey,
+    this.onTap,
+    this.minDragDist = 200
+  });
+
+  @override
+  State<StatefulWidget> createState() => IntensityWidgetState();
+
+  void _onDragStart(DragStartDetails d){
+
+  }
+}
+
+class IntensityWidgetState extends State<IntensitySwitch>{
+  @override
+  Widget build(BuildContext context) {
+    return new Expanded(
+      flex: 1,
+      child: GestureDetector(
+        onVerticalDragStart: (DragStartDetails d) =>widget._onDragStart(d),
+        child: new Card(
+          elevation: 3.0,
+          child: Container(
+            child: ClipRRect(
+              borderRadius: new BorderRadius.all(Radius.circular(4.0)),
+              child: new CustomPaint(
+                  painter: new CustomPresetPainter(
+                      presetColor: color.toDartColor(),
+                      indicatorColor: (widget.on? widget.activeColor : widget.inactiveColor)
+                  ),
+                  child: new InkWell(
+                    child: new Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 15.0),
+                          child: new Text(widget.intensity.toString()),
+                        )
+                    ),
+                    onTap: (){
+                      if(widget.onTap != null) {
+                        widget.onTap(widget.intensity);
+                      }
+                    },
+                    /*onDoubleTap: (){
+                                if(onDoubleTap !=null){
+                                  onDoubleTap();
+                                }
+                            },
+                    onLongPress: (){
+                      if(onLongPress != null) {
+                        onLongPress();
+                      }
+                    },*/
+                  )
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -9,18 +9,6 @@ class ColorCircle extends StatelessWidget{
 
   Widget build(BuildContext context) {
     return Container(
-      decoration: new ShapeDecoration(
-          shape: CircleBorder(
-
-          ),
-          shadows: [
-            BoxShadow(
-                color: Colors.black,
-                offset: new Offset(20.0, 20.0),
-                blurRadius: 10.0
-            )
-          ]
-      ),
       child: new CustomPaint(
           painter: new ColorCirclePainter(
               color: this.color
@@ -40,19 +28,27 @@ class ColorCirclePainter extends CustomPainter{
 
   final LColor color;
   final Paint circlePaint;
+  final Paint strokePaint;
   final double circleSize;
+  final Path circle = new Path();
 
   ColorCirclePainter({
     @required this.color,
     this.circleSize = 20.0
   }) : circlePaint = new Paint()
     ..color = color.toDartColor()
-    ..style = PaintingStyle.fill;
+    ..style = PaintingStyle.fill,
+    strokePaint = new Paint()
+    ..color = Colors.white
+    ..strokeWidth = 2.0
+    ..style = PaintingStyle.stroke;
 
   void paint(Canvas canvas, Size size) {
-
     Offset center = new Offset(circleSize/2, -1*circleSize/2);
+    circle.addOval(new Rect.fromCircle(center: center, radius: circleSize));
+    canvas.drawShadow(circle, Colors.black45, 3.0, true);
     canvas.drawCircle(center, circleSize, circlePaint);
+    canvas.drawCircle(center, circleSize, strokePaint);
   }
 
   @override

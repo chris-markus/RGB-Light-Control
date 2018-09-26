@@ -30,34 +30,37 @@ class Preset extends StatelessWidget {
             child: new Card(
                 elevation: 3.0,
                 child: Container(
-                    child: new CustomPaint(
-                      painter: new CustomPresetPainter(
-                        presetColor: color.toDartColor(),
-                        indicatorColor: (activated? activeColor : inactiveColor)
+                    child: ClipRRect(
+                      borderRadius: new BorderRadius.all(Radius.circular(4.0)),
+                      child: new CustomPaint(
+                        painter: new CustomPresetPainter(
+                          presetColor: color.toDartColor(),
+                          indicatorColor: (activated? activeColor : inactiveColor)
+                        ),
+                        child: new InkWell(
+                            child: new Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 15.0),
+                                  child: new Text(presetName),
+                                )
+                            ),
+                          onTap: (){
+                              if(onTap != null) {
+                                onTap(color);
+                              }
+                          },
+                          /*onDoubleTap: (){
+                              if(onDoubleTap !=null){
+                                onDoubleTap();
+                              }
+                          },*/
+                          onLongPress: (){
+                              if(onLongPress != null) {
+                                onLongPress();
+                              }
+                          },
+                        )
                       ),
-                      child: new InkWell(
-                          child: new Center(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 15.0),
-                                child: new Text(presetName),
-                              )
-                          ),
-                        onTap: (){
-                            if(onTap != null) {
-                              onTap(color);
-                            }
-                        },
-                        onDoubleTap: (){
-                            if(onDoubleTap !=null){
-                              onDoubleTap();
-                            }
-                        },
-                        onLongPress: (){
-                            if(onLongPress != null) {
-                              onLongPress();
-                            }
-                        },
-                      )
                     ),
                   ),
             ),
@@ -70,6 +73,7 @@ class CustomPresetPainter extends CustomPainter{
   Color presetColor;
   final Paint indicatorPaint;
   final Paint presetPaint;
+  final Path circle = new Path();
 
   CustomPresetPainter({
     @required this.indicatorColor,
@@ -83,8 +87,11 @@ class CustomPresetPainter extends CustomPainter{
 
   @override
   void paint(Canvas canvas, Size size) {
-    Rect bottomRect = const Offset(0.0, 0.0) & const Size(double.infinity, 4.0);
-    canvas.drawCircle(Offset(0.0,size.height), size.height/2.0, presetPaint);
+    Offset circleCenter = Offset(0.0,size.height);
+    Rect bottomRect = Offset(0.0, 0.0) & const Size(double.infinity, 5.0);
+    circle.addOval(new Rect.fromCircle(center: Offset(3.0,size.height), radius: size.height/2.0));
+    canvas.drawShadow(circle, Colors.black45, 5.0, true);
+    canvas.drawCircle(circleCenter, size.height/2.0, presetPaint);
     canvas.drawRect(bottomRect, indicatorPaint);
   }
 
