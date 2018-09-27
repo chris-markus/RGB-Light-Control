@@ -3,31 +3,75 @@ import 'package:flutter/material.dart';
 import 'package:light_control/uipartials/color_circle.dart';
 import 'package:light_control/utils/LColor.dart';
 import 'package:light_control/utils/color_picker.dart';
+import 'package:light_control/utils/storage_interface.dart';
 
-class AnimationList extends StatefulWidget{
-
+class AnimationList extends StatefulWidget {
   final BuildContext parentContext;
-  const AnimationList({
-    Key key,
-    @required this.parentContext
-  }) : super(key: key);
+  const AnimationList({Key key, @required this.parentContext})
+      : super(key: key);
 
   @override
   AnimationListState createState() {
     return new AnimationListState();
   }
-
 }
 
-class AnimationListState extends State<AnimationList>{
-  List<AnimationShortWidget> animationWidgets =[];
+class AnimationListState extends State<AnimationList> {
+  List<AnimationShortWidget> animationWidgets = [];
+
+  String newName = "";
+
+  @override
+  void initState() {
+    saveAnimations();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-
     Widget newAnimation = InkWell(
-      onTap: (){
-        //TODO: Implement animation adding
+      onTap: () {
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return new AlertDialog(
+                  title: Text("Create new Animation"),
+                  content: new TextField(
+                    decoration: new InputDecoration(
+                        labelText: "Name"
+                    ),
+                    onChanged: (String text) {
+                      newName = text;
+                    },
+                  ),
+                  actions: [
+                    new FlatButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: new Text("Cancel")
+                    ),
+                    new FlatButton(
+                      onPressed: () {
+                        AnimationShort anim = new AnimationShort([]);
+                        anim.name = newName;
+                        animationWidgets.add(AnimationShortWidget(
+                          animation: anim,
+                          name: anim.name,
+                        ));
+                        saveAnimations();
+                        Navigator.pop(context);
+                        Navigator.push(context, MaterialPageRoute(
+                          builder: (context) => AnimationView(
+                              keyframes: anim.keyframes,
+                              name: anim.name
+                          ),
+                        ),);
+                      },
+                      child: new Text("Create"),
+                    )
+                  ]
+              );
+            }
+        );
       },
       child: new Row(
           mainAxisSize: MainAxisSize.max,
@@ -35,28 +79,11 @@ class AnimationListState extends State<AnimationList>{
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: Text(
-                  "+ New Animation",
+              child: Text("+ New Animation",
                   style: new TextStyle(fontSize: 16.0, color: Colors.grey)),
             ),
-          ]
-      ),
+          ]),
     );
-
-    for(int i = 0; i<4; i++){
-      AnimationShort anim = new AnimationShort([new Keyframe(time: 10.0)]);
-      anim.name = "Animation " + i.toString();
-      animationWidgets.add(
-          AnimationShortWidget(
-            animation: anim,
-            name: anim.name,
-            tapAnimation: (AnimationShort anim){
-              Navigator.of(widget.parentContext).pop();
-              //TODO: Change displayed keyframes here!
-            },
-          )
-      );
-    }
 
     List<Widget> renderWidgets = [];
     renderWidgets.addAll(animationWidgets);
@@ -65,40 +92,45 @@ class AnimationListState extends State<AnimationList>{
       appBar: new AppBar(
         centerTitle: true,
         title: Text("Animations"),
-        leading: IconButton(
+        /*leading: IconButton(
           icon: Icon(Icons.chevron_left),
-          onPressed: (){
-            Navigator.of(widget.parentContext).pop();
+          onPressed: () {
           },
-        ),
+        ),*/
       ),
       body: new ListView(
         children: renderWidgets,
       ),
     );
   }
+
+  void saveAnimations(){
+    GlobalDataHandler.storeData("animations", animationWidgets.toString(),(bool b){print("wrote: " + animationWidgets.toString());});
+  }
 }
 
-class AnimationShort{
+class AnimationShort {
   List<Keyframe> keyframes;
   String name;
   AnimationShort(this.keyframes);
   GlobalKey widgetKey = new GlobalKey();
+
+  @override
+  toString() {
+    return name + ":" + keyframes.toString();
+  }
 }
 
-class AnimationShortWidget extends StatelessWidget{
-
+class AnimationShortWidget extends StatelessWidget {
   final AnimationShort animation;
   final GlobalKey key;
   final String name;
-  final ValueChanged<AnimationShort> tapAnimation;
 
   const AnimationShortWidget({
     this.animation,
     this.key,
     @required this.name,
-    this.tapAnimation,
-  }) : super(key:key);
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -109,6 +141,48 @@ class AnimationShortWidget extends StatelessWidget{
         border: Border(bottom: BorderSide(color: Colors.black12, width: 0.5)),
       ),
       child: new InkWell(
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(
+            builder: (context) => AnimationView(
+                keyframes: animation.keyframes,
+                name: animation.name,
+                //TODO: Implement animation saving
+              ),
+          ),);
+        },
+        onLongPress: (){
+          showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                String newName = "";
+                return new AlertDialog(
+                    title: Text("Rename \"" + animation.name + "\""),
+                    content: new TextField(
+                      decoration: new InputDecoration(
+                          labelText: "Name"
+                      ),
+                      onChanged: (String text) {
+                        newName = text;
+                      },
+                    ),
+                    actions: [
+                      new FlatButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: new Text("Cancel")
+                      ),
+                      new FlatButton(
+                        onPressed: () {
+                          animation.name = newName;
+                          //TODO: Make the name update in the UI
+                          Navigator.pop(context);
+                        },
+                        child: new Text("Rename"),
+                      )
+                    ]
+                );
+              }
+          );
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: new Row(
@@ -126,7 +200,7 @@ class AnimationShortWidget extends StatelessWidget{
                 ),
               ),
               IconButton(
-                onPressed: (){},
+                onPressed: () {},
                 icon: Icon(Icons.delete_forever),
                 iconSize: 20.0,
               ),
@@ -136,17 +210,20 @@ class AnimationShortWidget extends StatelessWidget{
       ),
     );
   }
+
+  @override
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.debug}) {
+    // TODO: implement toString
+    return animation.toString();
+  }
 }
 
 class AnimationView extends StatefulWidget {
-
   final GlobalKey key;
   final List<Keyframe> keyframes;
+  final String name;
 
-  AnimationView({
-    this.key,
-    this.keyframes
-  }):super(key: key);
+  AnimationView({this.key, this.keyframes, this.name}) : super(key: key);
 
   @override
   createState() => AnimationViewState();
@@ -156,6 +233,7 @@ BuildContext _globalContext;
 GlobalKey keyframeKey;
 
 class AnimationViewState extends State<AnimationView> {
+  bool playing = false;
 
   List<Keyframe> keyframes;
 
@@ -165,7 +243,7 @@ class AnimationViewState extends State<AnimationView> {
   void initState() {
     // TODO: implement initState
     keyframes = widget.keyframes;
-    if(keyframes == null){
+    if (keyframes == null) {
       keyframes = [];
     }
     super.initState();
@@ -175,113 +253,126 @@ class AnimationViewState extends State<AnimationView> {
   Widget build(BuildContext context) {
     //animationList = new AnimationList(parentContext: context);
     _globalContext = context;
-    return new Stack(
-      //key: _masterKey,
-      children: <Widget>[
-        Container(
-          height: 40.0,
-          width: double.infinity,
-          decoration: new BoxDecoration(color: Colors.white, boxShadow: [
-            new BoxShadow(
-                color: Colors.black12,
-                offset: Offset(0.0, 2.0),
-                blurRadius: 2.0)
-          ]),
-          child: Material(
-            type: MaterialType.transparency,
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              children: <Widget>[
-                Expanded(
-                  flex: 1,
-                  child: IconButton(
-                    icon: Icon(Icons.done_all, color: Colors.grey, size: 20.0),
-                    onPressed: (){
-                      bool newActive = false;
-                      for (var item in keyframes) {
-                        if (!item.checked) {
-                          newActive = true;
-                          break;
-                        }
-                      }
-                      for (var item in keyframes) {
-                        item.checked = newActive;
-                        item.setChecked();
-                      }
-                    },
-                  )
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Center(
-                    child: Text(
-                      "Length",
-                      style: headingStyle
+    return new Scaffold(
+        appBar: AppBar(
+            centerTitle: true,
+            title: Text(widget.name != null ? widget.name : "Animation Editor"),
+            leading: IconButton(
+                icon: Icon(Icons.close),
+                onPressed: () {
+                  Navigator.pop(context);
+                }),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.settings),
+                onPressed: () {
+                  //Navigator.pushNamed(mainContext, "/settings");
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.save),
+                onPressed: () {
+                  print("save");
+                },
+              )
+            ]),
+        floatingActionButton: new FloatingActionButton(
+            child: Icon(playing ? Icons.pause : Icons.play_arrow),
+            onPressed: () {
+              playing = !playing;
+              setState(() {});
+            }),
+        body: Stack(
+          //key: _masterKey,
+          children: <Widget>[
+            Container(
+              height: 40.0,
+              width: double.infinity,
+              decoration: new BoxDecoration(color: Colors.white, boxShadow: [
+                new BoxShadow(
+                    color: Colors.black12,
+                    offset: Offset(0.0, 2.0),
+                    blurRadius: 2.0)
+              ]),
+              child: Material(
+                type: MaterialType.transparency,
+                child: Row(mainAxisSize: MainAxisSize.max, children: <Widget>[
+                  Expanded(
+                      flex: 1,
+                      child: IconButton(
+                        icon: Icon(Icons.done_all,
+                            color: Colors.grey, size: 20.0),
+                        onPressed: () {
+                          bool newActive = false;
+                          for (var item in keyframes) {
+                            if (!item.checked) {
+                              newActive = true;
+                              break;
+                            }
+                          }
+                          for (var item in keyframes) {
+                            item.checked = newActive;
+                            item.setChecked();
+                          }
+                        },
+                      )),
+                  Expanded(
+                    flex: 1,
+                    child: Center(
+                      child: Text("Length", style: headingStyle),
                     ),
                   ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Center(
-                    child: Text(
-                      "Color",
-                      style: headingStyle
+                  Expanded(
+                    flex: 2,
+                    child: Center(
+                      child: Text("Color", style: headingStyle),
                     ),
                   ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Center(
-                    child: Text(
-                      "Intensity",
-                      style: headingStyle
+                  Expanded(
+                    flex: 2,
+                    child: Center(
+                      child: Text("Intensity", style: headingStyle),
                     ),
                   ),
-                ),
-              ]
+                ]),
+              ),
             ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 40.0),
-          child: new KeyframeList(
-            key: keyframeKey,
-            parentContext: context,
-            keyframes: keyframes,
-            onAdd: (Keyframe k){
-              keyframes.add(k);
-              setState(() {
-              });
-            }
-          )
-        ),
-      ],
-    );
+            Padding(
+                padding: const EdgeInsets.only(top: 40.0),
+                child: new KeyframeList(
+                    key: keyframeKey,
+                    parentContext: context,
+                    keyframes: keyframes,
+                    onAdd: (Keyframe k) {
+                      keyframes.add(k);
+                      setState(() {});
+                    }
+                )
+            ),
+          ],
+        ));
   }
 }
 
-
-class KeyframeList extends StatelessWidget{
-
+class KeyframeList extends StatelessWidget {
   final List<Keyframe> keyframes;
   final onAdd;
   final BuildContext parentContext;
 
-  KeyframeList({
-    Key key,
-    @required this.keyframes,
-    @required this.parentContext,
-    @required this.onAdd}) : super(key: key);
+  KeyframeList(
+      {Key key,
+      @required this.keyframes,
+      @required this.parentContext,
+      @required this.onAdd})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return new ListView(
-        padding: new EdgeInsets.all(0.0),
-        children: _buildList()
-    );
+        padding: new EdgeInsets.all(0.0), children: _buildList());
   }
 
-  List<Widget> _buildList(){
+  List<Widget> _buildList() {
     Widget newKeyframe = InkWell(
       onTap: () => _addKeyframe(),
       child: new Row(
@@ -290,62 +381,56 @@ class KeyframeList extends StatelessWidget{
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: Text(
-                  "+ New Keyframe",
+              child: Text("+ New Keyframe",
                   style: new TextStyle(fontSize: 16.0, color: Colors.grey)),
             ),
-          ]
-      ),
+          ]),
     );
 
     List<Widget> keyframeWidgetList = [];
 
-    for(int i=0; i<keyframes.length; i++){
+    for (int i = 0; i < keyframes.length; i++) {
       keyframeWidgetList.add(keyframes[i]);
-      keyframeWidgetList.add(new Divider(height: 1.0),);
+      keyframeWidgetList.add(
+        new Divider(height: 1.0),
+      );
     }
     keyframeWidgetList.add(newKeyframe);
 
     return keyframeWidgetList;
   }
 
-  void _addKeyframe(){
+  void _addKeyframe() {
     showDialog(
-      context: parentContext,
-      builder: (BuildContext context){
-        return new KeyframeDialogs(
-          onComplete: (double t, int i, LColor c){
-            onAdd(new Keyframe(time: t, intensity: i, color: c));
-            Navigator.of(parentContext).pop();
-          },
-        );
-      }
-    );
+        context: parentContext,
+        builder: (BuildContext context) {
+          return new KeyframeDialogs(
+            onComplete: (double t, int i, LColor c) {
+              onAdd(new Keyframe(time: t, intensity: i, color: c));
+              Navigator.of(parentContext).pop();
+            },
+          );
+        });
   }
-
 }
 
-class KeyframeDialogs extends StatefulWidget{
-
+class KeyframeDialogs extends StatefulWidget {
   final onComplete;
   final double startTime;
   final LColor startColor;
   final int startIntensity;
 
-  KeyframeDialogs({
-    @required this.onComplete,
-    this.startTime = 0.0,
-    this.startColor = LColors.white,
-    this.startIntensity = 0
-  });
+  KeyframeDialogs(
+      {@required this.onComplete,
+      this.startTime = 0.0,
+      this.startColor = LColors.white,
+      this.startIntensity = 0});
 
   @override
   createState() => KeyframeDialogsState();
-
 }
 
-class KeyframeDialogsState extends State<KeyframeDialogs>{
-
+class KeyframeDialogsState extends State<KeyframeDialogs> {
   int page = 1;
 
   int intensity;
@@ -360,7 +445,7 @@ class KeyframeDialogsState extends State<KeyframeDialogs>{
   LColor tempColor = LColors.white;
 
   @override
-  initState(){
+  initState() {
     super.initState();
     tempIntensity = widget.startIntensity;
     tempTime = widget.startTime;
@@ -370,36 +455,35 @@ class KeyframeDialogsState extends State<KeyframeDialogs>{
   @override
   Widget build(BuildContext context) {
     Widget currDialog;
-    switch (page){
+    switch (page) {
       case 3:
         //intensity
         currDialog = new AlertDialog(
             title: Text("Set Intensity"),
             content: Flex(
-              mainAxisSize: MainAxisSize.min,
-              direction: Axis.vertical,
+                mainAxisSize: MainAxisSize.min,
+                direction: Axis.vertical,
                 children: <Widget>[
                   Center(
                     child: new Text(
                       tempIntensity.round().toString(),
-                      style: new TextStyle(fontSize: 16.0, color: Colors.black54),
+                      style:
+                          new TextStyle(fontSize: 16.0, color: Colors.black54),
                     ),
                   ),
                   new Slider(
-                      value: tempIntensity*1.0,
+                      value: tempIntensity * 1.0,
                       min: 0.0,
                       max: LColor.COLORMAX.toDouble(),
-                      onChanged: (double intens){
+                      onChanged: (double intens) {
                         setState(() {
                           tempIntensity = intens.round();
                         });
-                      }
-                  ),
-                ]
-              ),
+                      }),
+                ]),
             actions: [
               new FlatButton(
-                  onPressed: (){
+                  onPressed: () {
                     widget.onComplete(time, intensity, color);
                   },
                   child: new Text("Blank")),
@@ -412,92 +496,86 @@ class KeyframeDialogsState extends State<KeyframeDialogs>{
                 },
                 child: new Text("Done"),
               )
-            ]
-        );
+            ]);
         break;
       case 2:
         //color
         currDialog = new AlertDialog(
-          contentPadding: EdgeInsets.symmetric(horizontal: 0.0),
-          title: Text("Pick a color"),
-          content: Container(
-            width: 0.0,
-            child: new ColorPicker(
-                color: tempColor,
-                onChanged: (LColor newColor){
-                  setState(() {
-                    tempColor = newColor;
-                  });
-                }
+            contentPadding: EdgeInsets.symmetric(horizontal: 0.0),
+            title: Text("Pick a color"),
+            content: Container(
+              width: 0.0,
+              child: new ColorPicker(
+                  color: tempColor,
+                  onChanged: (LColor newColor) {
+                    setState(() {
+                      tempColor = newColor;
+                    });
+                  }),
             ),
-          ),
-          actions: [
-            new FlatButton(
-                onPressed: (){
+            actions: [
+              new FlatButton(
+                  onPressed: () {
+                    setState(() {
+                      page++;
+                    });
+                  },
+                  child: new Text("Blank")),
+              new FlatButton(
+                onPressed: () {
                   setState(() {
-                    page ++;
+                    page++;
+                    color = tempColor;
                   });
                 },
-                child: new Text("Blank")),
-            new FlatButton(
-              onPressed: () {
-                setState(() {
-                  page ++;
-                  color = tempColor;
-                });
-              },
-              child: new Text("Next"),
-            )
-          ]
-        );
+                child: new Text("Next"),
+              )
+            ]);
         break;
       case 1:
       default:
         //time
         currDialog = new AlertDialog(
             title: Text("Keyframe Duration"),
-              content: Column(
-                //direction: Axis.vertical,
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Center(
-                      child: new TimeSelector(
+            content: Column(
+              //direction: Axis.vertical,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Center(
+                    child: new TimeSelector(
                         startTime: tempTime,
-                        onTimeChange: ({min, sec, milis}){
-                          if(min != null){
+                        onTimeChange: ({min, sec, milis}) {
+                          if (min != null) {
                             tempMin = min;
                           }
-                          if(sec != null){
+                          if (sec != null) {
                             tempSec = sec;
                           }
-                          if(milis != null){
+                          if (milis != null) {
                             tempMilis = milis;
                           }
                           tempTime = tempMin * 60.0 + tempSec + tempMilis;
-                        }
-                      )
-                  ),
-                ],
-              ),
+                        })),
+              ],
+            ),
             actions: [
               new FlatButton(
                 onPressed: () {
                   setState(() {
-                    page ++;
+                    page++;
                     time = tempTime;
                   });
                 },
                 child: new Text("Next"),
               )
-            ]
-        );
+            ]);
         break;
     }
     return currDialog;
   }
 }
 
-class TimeSelector extends StatelessWidget{
+class TimeSelector extends StatelessWidget {
   List<Widget> minutes = [];
   List<Widget> seconds = [];
   List<Widget> milis = [];
@@ -514,14 +592,9 @@ class TimeSelector extends StatelessWidget{
   FixedExtentScrollController _secondsController;
   FixedExtentScrollController _minutesController;
 
-  TextStyle numberStyle = new TextStyle(
-      fontSize: 20.0
-  );
+  TextStyle numberStyle = new TextStyle(fontSize: 20.0);
 
-  TextStyle labelStyle = new TextStyle(
-    color: Colors.black45,
-    fontSize: 13.0
-  );
+  TextStyle labelStyle = new TextStyle(color: Colors.black45, fontSize: 13.0);
 
   TimeSelector({
     this.itemWidth = 60.0,
@@ -529,21 +602,24 @@ class TimeSelector extends StatelessWidget{
     this.itemExtent = 30.0,
     this.onTimeChange,
     this.startTime = 0.0,
-  }){
-    for(int i = 0; i < numMin; i++){
+  }) {
+    for (int i = 0; i < numMin; i++) {
       minutes.add(new Text(i.toString(), style: numberStyle));
     }
-    for(int i = 0; i <= 59; i++){
+    for (int i = 0; i <= 59; i++) {
       seconds.add(new Text(i.toString(), style: numberStyle));
     }
-    for(double i = 0.0; i <= 0.75; i += 0.25){
-      milis.add(new Text(i.toString().substring(2).padRight(2, "0"), style: numberStyle));
+    for (double i = 0.0; i <= 0.75; i += 0.25) {
+      milis.add(new Text(i.toString().substring(2).padRight(2, "0"),
+          style: numberStyle));
     }
 
-    _milisController = new FixedExtentScrollController(initialItem: ((startTime - startTime.floor()) ~/ 0.25));
-    _secondsController = new FixedExtentScrollController(initialItem: startTime.floor()%60);
-    _minutesController = new FixedExtentScrollController(initialItem: (startTime/60).floor());
-
+    _milisController = new FixedExtentScrollController(
+        initialItem: ((startTime - startTime.floor()) ~/ 0.25));
+    _secondsController =
+        new FixedExtentScrollController(initialItem: startTime.floor() % 60);
+    _minutesController =
+        new FixedExtentScrollController(initialItem: (startTime / 60).floor());
   }
 
   @override
@@ -557,97 +633,87 @@ class TimeSelector extends StatelessWidget{
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 Container(
-                  width: itemWidth + 5.0,
-                  child: Center(child: Text("min", style: labelStyle))
-                ),
+                    width: itemWidth + 5.0,
+                    child: Center(child: Text("min", style: labelStyle))),
                 Container(
                     width: itemWidth + 5.0,
-                    child: Center(child: Text("sec", style: labelStyle))
-                ),
+                    child: Center(child: Text("sec", style: labelStyle))),
                 Container(
                     width: itemWidth + 5.0,
-                    child: Center(child: Text("ms", style: labelStyle))
-                )
+                    child: Center(child: Text("ms", style: labelStyle)))
               ],
             ),
           ),
           Container(
             decoration: new BoxDecoration(
-              border: new Border(top: BorderSide(color: Colors.black12), bottom: BorderSide(color: Colors.black12))
-            ),
-            child: new Row(
-              mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: itemWidth,
-                    height: selectorHeight,
-                    child: ListWheelScrollView(
-                      physics: new FixedExtentScrollPhysics(),
-                      controller: _minutesController,
-                      itemExtent: itemExtent,
-                      children: minutes,
-                      onSelectedItemChanged: (int min) {
-                        onTimeChange(min:min%numMin);
-                      }
-                    ),
-                  ),
-                  Container(
-                    height: selectorHeight,
-                    child: Center(
+                border: new Border(
+                    top: BorderSide(color: Colors.black12),
+                    bottom: BorderSide(color: Colors.black12))),
+            child: new Row(mainAxisSize: MainAxisSize.min, children: [
+              Container(
+                width: itemWidth,
+                height: selectorHeight,
+                child: ListWheelScrollView(
+                    physics: new FixedExtentScrollPhysics(),
+                    controller: _minutesController,
+                    itemExtent: itemExtent,
+                    children: minutes,
+                    onSelectedItemChanged: (int min) {
+                      onTimeChange(min: min % numMin);
+                    }),
+              ),
+              Container(
+                  height: selectorHeight,
+                  child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Text(":", style: new TextStyle(color: Colors.black45, fontSize: 20.0)),
-                      )
-                    )
-                  ),
-                  Container(
-                    width: itemWidth,
-                    height: selectorHeight,
-                    child: ListWheelScrollView(
-                      physics: new FixedExtentScrollPhysics(),
-                      controller: _secondsController,
-                      itemExtent: itemExtent,
-                      children: seconds,
-                      onSelectedItemChanged: (int sec){
-                        onTimeChange(sec:sec%60);
-                      }
-                    ),
-                  ),
-                  Container(
-                      height: selectorHeight,
-                      child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 6.0),
-                            child: Text(".", style: new TextStyle(color: Colors.black45, fontSize: 20.0)),
-                          )
-                      )
-                  ),
-                  Container(
-                    width: itemWidth,
-                    height: selectorHeight,
-                    child: ListWheelScrollView(
-                      physics: new FixedExtentScrollPhysics(),
-                      controller: _milisController,
-                      itemExtent: itemExtent,
-                      children: milis,
-                      onSelectedItemChanged: (int milis) {
-                        //_milisController.animateToItem(milis, duration: Duration(milliseconds: 300), curve: Curves.ease);
-                        onTimeChange(milis:(milis%4.toDouble() * 0.25));
-                      }
-                    ),
-                  )
-              ]
-            ),
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Text(":",
+                        style: new TextStyle(
+                            color: Colors.black45, fontSize: 20.0)),
+                  ))),
+              Container(
+                width: itemWidth,
+                height: selectorHeight,
+                child: ListWheelScrollView(
+                    physics: new FixedExtentScrollPhysics(),
+                    controller: _secondsController,
+                    itemExtent: itemExtent,
+                    children: seconds,
+                    onSelectedItemChanged: (int sec) {
+                      onTimeChange(sec: sec % 60);
+                    }),
+              ),
+              Container(
+                  height: selectorHeight,
+                  child: Center(
+                      child: Padding(
+                    padding: const EdgeInsets.only(bottom: 6.0),
+                    child: Text(".",
+                        style: new TextStyle(
+                            color: Colors.black45, fontSize: 20.0)),
+                  ))),
+              Container(
+                width: itemWidth,
+                height: selectorHeight,
+                child: ListWheelScrollView(
+                    physics: new FixedExtentScrollPhysics(),
+                    controller: _milisController,
+                    itemExtent: itemExtent,
+                    children: milis,
+                    onSelectedItemChanged: (int milis) {
+                      //_milisController.animateToItem(milis, duration: Duration(milliseconds: 300), curve: Curves.ease);
+                      onTimeChange(milis: (milis % 4.toDouble() * 0.25));
+                    }),
+              )
+            ]),
           ),
         ],
       ),
     );
   }
-
 }
 
-class Keyframe extends StatefulWidget{
-
+class Keyframe extends StatefulWidget {
   bool checked;
   LColor color;
   int intensity;
@@ -655,50 +721,58 @@ class Keyframe extends StatefulWidget{
   bool hasColor;
   bool hasIntensity;
 
-  final TextStyle textStyle = new TextStyle(fontSize: 16.0, color: Colors.black54);
+  final TextStyle textStyle =
+      new TextStyle(fontSize: 16.0, color: Colors.black54);
 
-  Keyframe({@required this.time, this.intensity, this.color, this.checked = false}){
+  Keyframe(
+      {@required this.time, this.intensity, this.color, this.checked = false}) {
     hasIntensity = false;
     hasColor = false;
-    if(this.intensity != null){
+    if (this.intensity != null) {
       hasIntensity = true;
     }
-    if(this.color != null){
+    if (this.color != null) {
       hasColor = true;
     }
   }
 
-
   KeyframeState keyframeState;
 
   @override
-  State<StatefulWidget> createState(){
+  State<StatefulWidget> createState() {
     keyframeState = new KeyframeState();
     return keyframeState;
   }
 
-
-  void edit({double time, int intensity, LColor color}){
-      this.time = time;
-      this.intensity = intensity;
-      this.color = color;
+  void edit({double time, int intensity, LColor color}) {
+    this.time = time;
+    this.intensity = intensity;
+    this.color = color;
   }
 
   void setChecked() => keyframeState.setChecked();
+
+  @override
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.debug}) {
+    // TODO: implement toString
+    return time.toString() +
+        ";" +
+        color.toString() +
+        ";" +
+        intensity.toString();
+  }
 }
 
-class KeyframeState extends State<Keyframe>{
-
-  void setChecked(){
-    setState(() {
-    });
+class KeyframeState extends State<Keyframe> {
+  void setChecked() {
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onLongPress: () => editKeyframe(widget),
-      onTap: (){
+      onTap: () {
         setState(() {
           widget.checked = !widget.checked;
         });
@@ -712,15 +786,22 @@ class KeyframeState extends State<Keyframe>{
             Expanded(
               flex: 1,
               child: Icon(
-                  (widget.checked ? Icons.check_circle : Icons.check_circle_outline),
-                  color: (widget.checked ? Colors.blue : Colors.grey), size: 20.0),
+                  (widget.checked
+                      ? Icons.check_circle
+                      : Icons.check_circle_outline),
+                  color: (widget.checked ? Colors.blue : Colors.grey),
+                  size: 20.0),
             ),
             Expanded(
               flex: 1,
               child: Center(
                 child: Text(
-                  (widget.time >= 60 ? (widget.time/60).round().toString() + "m " : "") +
-                      (widget.time%60 != 0 || widget.time < 60? (widget.time%60).toString() + "s" : ""),
+                  (widget.time >= 60
+                          ? (widget.time / 60).round().toString() + "m "
+                          : "") +
+                      (widget.time % 60 != 0 || widget.time < 60
+                          ? (widget.time % 60).toString() + "s"
+                          : ""),
                   style: widget.textStyle,
                 ),
               ),
@@ -728,20 +809,25 @@ class KeyframeState extends State<Keyframe>{
             Expanded(
               flex: 2,
               child: Center(
-                child: (widget.color == null? new Text("-", style: widget.textStyle):Padding(
-                  padding: const EdgeInsets.only(top: 16.0, left: 12.0, right: 32.0),
-                  child: ColorCircle(
-                    color: widget.color,
-                    circleSize: 16.0,
-                  ),
-                )),
+                child: (widget.color == null
+                    ? new Text("-", style: widget.textStyle)
+                    : Padding(
+                        padding: const EdgeInsets.only(
+                            top: 16.0, left: 12.0, right: 32.0),
+                        child: ColorCircle(
+                          color: widget.color,
+                          circleSize: 16.0,
+                        ),
+                      )),
               ),
             ),
             Expanded(
               flex: 2,
               child: Center(
                 child: Text(
-                  (widget.intensity == null ? "-" : widget.intensity.toString()),
+                  (widget.intensity == null
+                      ? "-"
+                      : widget.intensity.toString()),
                   style: widget.textStyle,
                 ),
               ),
@@ -752,22 +838,20 @@ class KeyframeState extends State<Keyframe>{
     );
   }
 
-  void editKeyframe(Keyframe k){
+  void editKeyframe(Keyframe k) {
     showDialog(
         context: _globalContext,
-        builder: (BuildContext context){
+        builder: (BuildContext context) {
           return new KeyframeDialogs(
             startColor: (k.color == null ? LColors.white : k.color),
             startIntensity: (k.intensity == null ? 0 : k.intensity),
             startTime: k.time,
-            onComplete: (double t, int i, LColor c){
+            onComplete: (double t, int i, LColor c) {
               k.edit(time: t, intensity: i, color: c);
               Navigator.of(_globalContext).pop();
-              setState(() {
-              });
+              setState(() {});
             },
           );
-        }
-    );
+        });
   }
 }

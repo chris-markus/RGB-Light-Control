@@ -4,6 +4,7 @@ import 'package:light_control/utils/LColor.dart';
 import 'package:light_control/utils/preset.dart';
 
 import '../utils/color_picker.dart';
+import '../utils/storage_interface.dart';
 
 LColor color = LColors.white;
 
@@ -19,13 +20,33 @@ bool _intensitySwitch = false;
 class ParameterView extends StatefulWidget{
   final Widget parent;
   final onParameterChanged;
+  final GlobalKey key;
 
   ParameterView(
     this.parent,
-  {this.onParameterChanged});
+    {
+    this.onParameterChanged,
+    this.key,
+  }):super(key: key);
 
   @override
   createState() => ParameterViewState();
+}
+
+class CustomScrollPhysics extends ScrollPhysics{
+
+  bool scroll = true;
+
+  void setScroll (bool inpt){
+    scroll = inpt;
+  }
+
+  @override
+  double applyPhysicsToUserOffset(ScrollMetrics position, double offset) {
+    // TODO: implement applyPhysicsToUserOffset
+      offset = 0.0;
+    return super.applyPhysicsToUserOffset(position, offset);
+  }
 }
 
 class ParameterViewState extends State<ParameterView>{
@@ -36,17 +57,43 @@ class ParameterViewState extends State<ParameterView>{
 
   Color inactiveColor = Colors.grey;
 
+  CustomScrollPhysics _scrollPhysics = new CustomScrollPhysics();
+
   bool scroll = true;
 
   @override
   void initState() {
+
     if(presetColors !=null && presetColors.length == 0){
       for(int i=0; i<8; i++){
         presetColors.add(LColors.white);
       }
     }
-    checkPresets(color);
+
+    GlobalDataHandler.retrieveData("presets", (bool success, String data){
+      if(data == null){
+        return;
+      }
+      List<String> parsedData = data.split(";");
+      for(int i=0; i<parsedData.length; i++){
+        String item = parsedData[i].split(":")[1];
+        String name = parsedData[i].split(":")[0];
+        if(item != null){
+          int r = int.parse(item.substring(0,2), radix: 16);
+          int g = int.parse(item.substring(2,4), radix: 16);
+          int b = int.parse(item.substring(4), radix: 16);
+          print(item.substring(0,1) + ", " + item.substring(2,3) + ", " + item.substring(4));
+          print(r.toString() + ", " + g.toString() + ", " + b.toString());
+          presetColors[i] = LColor(r,g,b);
+          presetNames[i] = name;
+        }
+      }
+      checkPresets(color);
+      redraw();
+    });
+
     super.initState();
+    checkPresets(color);
   }
 
   @override
@@ -54,7 +101,7 @@ class ParameterViewState extends State<ParameterView>{
     return Container(
       child: ListView(
         //controller: _scrollController,
-        //physics: CustomScrollPhysics();
+        physics: _scrollPhysics,
         children: <Widget>[
           new Card(
             key: _colorPicker,
@@ -64,13 +111,14 @@ class ParameterViewState extends State<ParameterView>{
                   ColorPicker(
                     color: color,
                     onPointerDown: (){
-                      print("down");
+                      //print("down");
+                      _scrollPhysics.setScroll(false);
                       setState(() {
                         scroll = false;
                       });
                     },
                     onPointerUp: (){
-                      print("up");
+                      _scrollPhysics.setScroll(false);
                       setState(() {
                         scroll = true;
                       });
@@ -218,6 +266,11 @@ class ParameterViewState extends State<ParameterView>{
     );
   }
 
+  void redraw(){
+    setState(() {
+    });
+  }
+
   void presetTapped(LColor rgb) {
     color = rgb;
     checkPresets(rgb);
@@ -228,7 +281,21 @@ class ParameterViewState extends State<ParameterView>{
   void presetLongPress(int prst){
     presetColors[prst] = color;
     checkPresets(color);
+    savePresets();
     setState(() {});
+  }
+
+  void savePresets(){
+    String presetString = "";
+    for(int i=0; i<presetNames.length; i++){
+      presetString += presetNames[i] + ":";
+      presetString += presetColors[i].toHexColor(255.0);
+      if(i != presetNames.length - 1){
+        presetString += ";";
+      }
+    }
+    print(presetString);
+    GlobalDataHandler.storeData("presets", presetString,(bool b){print("wrote");});
   }
 
   void presetDoubleTap(int prst){

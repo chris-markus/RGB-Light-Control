@@ -1,26 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:light_control/pages/animations.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import './pages/parameters.dart';
 import './pages/settings.dart';
 import './utils/fetch_devices.dart';
 
 FetchDevices deviceManager = new FetchDevices();
-
-class GlobalDataHandler {
-  static void storeData(String key, String value, ValueChanged<bool> callback) async{
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString(key, value);
-    callback(true);
-  }
-  static void retrieveData(String key, String value, callback) async{
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String data = prefs.getString(key);
-    callback(true, data);
-  }
-}
 
 final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
@@ -62,7 +48,7 @@ class MainState extends State<MainApp> {
           '/settings': (BuildContext context) =>
               new Settings(parentContext: context),
           '/animationList': (BuildContext context) =>
-            new AnimationList(parentContext: context),
+            new AnimationView(),
         },
         debugShowCheckedModeBanner: false,
         theme: theme,
@@ -170,40 +156,7 @@ class AnimationsFlowState extends State<AnimationsFlow> {
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-      appBar: AppBar(
-          centerTitle: true,
-          title: Text("Animation Editor"),
-          leading: IconButton(
-              icon: Icon(Icons.view_list),
-              onPressed: (){
-                Navigator.pushNamed(mainContext, "/animationList");
-              }
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.settings),
-              onPressed: () {
-                Navigator.pushNamed(mainContext, "/settings");
-              },
-            ),
-            IconButton(
-              icon: Icon(Icons.save),
-              onPressed: () {
-                print("save");
-              },
-            )
-          ]
-      ),
-      floatingActionButton: new FloatingActionButton(
-          child: Icon(playing ? Icons.pause : Icons.play_arrow),
-          onPressed: (){
-            playing = !playing;
-            setState(() {});
-          }
-      ),
-      body: AnimationView(),
-    );
+    return new AnimationList(parentContext: mainContext);
   }
 }
 
