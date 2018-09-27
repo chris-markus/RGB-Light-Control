@@ -1,11 +1,26 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:light_control/pages/animations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import './pages/parameters.dart';
 import './pages/settings.dart';
 import './utils/fetch_devices.dart';
 
 FetchDevices deviceManager = new FetchDevices();
+
+class GlobalDataHandler {
+  static void storeData(String key, String value, ValueChanged<bool> callback) async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, value);
+    callback(true);
+  }
+  static void retrieveData(String key, String value, callback) async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String data = prefs.getString(key);
+    callback(true, data);
+  }
+}
 
 final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
