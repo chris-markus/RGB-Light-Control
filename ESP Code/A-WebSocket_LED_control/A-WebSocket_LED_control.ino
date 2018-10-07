@@ -240,14 +240,17 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
       if (payload[0] == '#') {            // we get RGB data
         uint32_t rgb = (uint32_t) strtol((const char *) &payload[1], NULL, 16);   // decode rgb data
         int t = ((rgb >> 24) & 0x3FF);
-        int r = ((rgb >> 16) & 0x2FF);                     // 10 bits per color, so R: bits 20-29
-        int g = ((rgb >> 8) & 0x2FF);                     // G: bits 10-19
-        int b =          rgb & 0x2FF;                      // B: bits  0-9
+        int r = ((rgb >> 16) & 0x2FF);
+        int g = ((rgb >> 8) & 0x2FF);
+        int b = rgb & 0x2FF;
 
         printColor(t, r, g, b);
       } else if (payload[0] == 'B') {
         Serial.println("battlevel");
+      } else if (payload[0] == 'N'){
+        
       }
+      
       break;
   }
 }

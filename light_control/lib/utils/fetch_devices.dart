@@ -17,7 +17,7 @@ class FetchDevices {
   WebSocketChannel channel;
 
   Device fetch(){
-
+    return new Device("1", "2");
   }
 
   void update(){
@@ -51,7 +51,7 @@ class Device {
   WebSocketChannel channel;
   String codename;
   final mac;
-  Device(this.ip, this.mac, [this.codename]){
+  Device(this.ip, this.mac, {this.codename}){
     if(this.codename == null){
       this.codename = "Unnamed";
     }
