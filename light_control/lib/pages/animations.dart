@@ -239,6 +239,8 @@ class AnimationViewState extends State<AnimationView> {
 
   TextStyle headingStyle = new TextStyle(fontSize: 16.0, color: Colors.black54);
 
+  bool showDelete = false;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -263,18 +265,12 @@ class AnimationViewState extends State<AnimationView> {
                   Navigator.pop(context);
                 }),
             actions: [
-              IconButton(
-                icon: Icon(Icons.settings),
-                onPressed: () {
-                  //Navigator.pushNamed(mainContext, "/settings");
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.save),
+              showDelete ? IconButton(
+                icon: Icon(Icons.delete),
                 onPressed: () {
                   print("save");
                 },
-              )
+              ): Text("")
             ]),
         floatingActionButton: new FloatingActionButton(
             child: Icon(playing ? Icons.pause : Icons.play_arrow),
@@ -313,6 +309,18 @@ class AnimationViewState extends State<AnimationView> {
                           for (var item in keyframes) {
                             item.checked = newActive;
                             item.setChecked();
+                          }
+
+                          //TODO: Make this more universal
+                          if(newActive){
+                            showDelete = true;
+                            setState(() {
+                            });
+                          }
+                          else{
+                            showDelete = false;
+                            setState(() {
+                            });
                           }
                         },
                       )),

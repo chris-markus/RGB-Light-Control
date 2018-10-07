@@ -33,6 +33,10 @@ class ParameterView extends StatefulWidget{
   createState() => ParameterViewState();
 }
 
+ScrollPhysics noScroll = new NeverScrollableScrollPhysics();
+ScrollPhysics scrollPhys = new ScrollPhysics();
+
+
 class CustomScrollPhysics extends ScrollPhysics{
 
   bool scroll = true;
@@ -57,7 +61,7 @@ class ParameterViewState extends State<ParameterView>{
 
   Color inactiveColor = Colors.grey;
 
-  CustomScrollPhysics _scrollPhysics = new CustomScrollPhysics();
+  ScrollPhysics _scrollPhysics = ScrollPhysics();
 
   bool scroll = true;
 
@@ -101,7 +105,7 @@ class ParameterViewState extends State<ParameterView>{
     return Container(
       child: ListView(
         //controller: _scrollController,
-        physics: _scrollPhysics,
+        physics: scroll? new ScrollPhysics(parent: _scrollPhysics) : new NeverScrollableScrollPhysics(parent: _scrollPhysics),
         children: <Widget>[
           new Card(
             key: _colorPicker,
@@ -112,13 +116,13 @@ class ParameterViewState extends State<ParameterView>{
                     color: color,
                     onPointerDown: (){
                       //print("down");
-                      _scrollPhysics.setScroll(false);
+                      //_scrollPhysics.setScroll(false);
                       setState(() {
                         scroll = false;
                       });
                     },
                     onPointerUp: (){
-                      _scrollPhysics.setScroll(false);
+                      //_scrollPhysics.setScroll(false);
                       setState(() {
                         scroll = true;
                       });
