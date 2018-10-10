@@ -25,45 +25,45 @@ class Preset extends StatelessWidget {
 
   @override
   build(BuildContext context){
-      return new Expanded(
-          flex: 1,
-            child: new Card(
-                elevation: 3.0,
-                child: Container(
-                    child: ClipRRect(
-                      borderRadius: new BorderRadius.all(Radius.circular(4.0)),
-                      child: new CustomPaint(
-                        painter: new CustomPresetPainter(
-                          presetColor: color.toDartColor(),
-                          indicatorColor: (activated? activeColor : inactiveColor)
-                        ),
-                        child: new InkWell(
-                            child: new Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 15.0),
-                                  child: new Text(presetName),
-                                )
-                            ),
-                          onTap: (){
-                              if(onTap != null) {
-                                onTap(color);
-                              }
-                          },
-                          /*onDoubleTap: (){
-                              if(onDoubleTap !=null){
-                                onDoubleTap();
-                              }
-                          },*/
-                          onLongPress: (){
-                              if(onLongPress != null) {
-                                onLongPress();
-                              }
-                          },
-                        )
-                      ),
+      return Expanded(
+        flex: 1,
+        child: new Card(
+            elevation: 3.0,
+            child: Container(
+                child: ClipRRect(
+                  borderRadius: new BorderRadius.all(Radius.circular(4.0)),
+                  child: new CustomPaint(
+                    painter: new CustomPresetPainter(
+                      presetColor: color.toDartColor(),
+                      indicatorColor: (activated? activeColor : inactiveColor)
                     ),
+                    child: new InkWell(
+                        child: new Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 15.0),
+                              child: new Text(presetName),
+                            )
+                        ),
+                      onTap: (){
+                          if(onTap != null) {
+                            onTap(color);
+                          }
+                      },
+                      /*onDoubleTap: (){
+                          if(onDoubleTap !=null){
+                            onDoubleTap();
+                          }
+                      },*/
+                      onLongPress: (){
+                          if(onLongPress != null) {
+                            onLongPress();
+                          }
+                      },
+                    )
                   ),
-            ),
+                ),
+              ),
+        ),
       );
   }
 }
@@ -98,5 +98,23 @@ class CustomPresetPainter extends CustomPainter{
   @override
   bool shouldRepaint(CustomPresetPainter oldDelegate) {
     return oldDelegate.indicatorColor != indicatorColor;
+  }
+}
+
+class PresetData {
+  LColor color;
+  bool active;
+  String name;
+
+  PresetData({
+    this.color = LColors.white,
+    this.active = false,
+    this.name = ""
+  });
+  
+  @override
+  String toString() {
+    // TODO: implement toString
+    return name + ":" + color.toHexColor(LColor.COLORMAX.toDouble());
   }
 }

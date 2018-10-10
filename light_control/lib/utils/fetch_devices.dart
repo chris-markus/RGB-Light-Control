@@ -73,6 +73,7 @@ class Device {
   }
   void sendData(String data){
     if(active){
+      print(data);
       channel.sink.add(data);
     }
   }

@@ -8,10 +8,6 @@ import '../utils/storage_interface.dart';
 
 LColor color = LColors.white;
 
-List<LColor> presetColors = [LColors.white, LColors.white, LColors.white, LColors.white, LColors.red, LColors.green, LColors.blue, LColors.white];
-List<bool> presetActive = [false, false, false, false, false, false, false, false];
-List<String> presetNames = ["1","2","3","4"];
-
 double _intensitySliderVal = 0.0;
 double _prevIntensityVal = LColor.COLORMAX.toDouble();
 
@@ -36,7 +32,7 @@ class ParameterView extends StatefulWidget{
 ScrollPhysics noScroll = new NeverScrollableScrollPhysics();
 ScrollPhysics scrollPhys = new ScrollPhysics();
 
-
+/*
 class CustomScrollPhysics extends ScrollPhysics{
 
   bool scroll = true;
@@ -51,11 +47,14 @@ class CustomScrollPhysics extends ScrollPhysics{
       offset = 0.0;
     return super.applyPhysicsToUserOffset(position, offset);
   }
-}
+}*/
 
 class ParameterViewState extends State<ParameterView>{
-  final _colorPicker = null;
-  final _intensitySlider = null;
+  final GlobalKey _colorPicker = null;
+  final GlobalKey _intensitySlider = null;
+
+  int numPresetRows = 4;
+  int numPresets = 4;
 
   bool activeOne = false;
 
@@ -65,20 +64,30 @@ class ParameterViewState extends State<ParameterView>{
 
   bool scroll = true;
 
+
+  List<PresetData> predefinedPresetData = [
+    PresetData(name: "White", color: LColors.white),
+    PresetData(name: "Red", color: LColors.red),
+    PresetData(name: "Green", color: LColors.green),
+    PresetData(name: "Blue", color: LColors.blue)
+  ];
+
+  List<PresetData> presetData = [];
+
   @override
   void initState() {
 
-    if(presetColors !=null && presetColors.length == 0){
-      for(int i=0; i<8; i++){
-        presetColors.add(LColors.white);
-      }
+    for(int i=0; i<numPresets; i++){
+      presetData.add(PresetData(name: i.toString()));
     }
+
+    presetData = presetData + predefinedPresetData;
 
     GlobalDataHandler.retrieveData("presets", (bool success, String data){
       if(data == null){
         return;
       }
-      List<String> parsedData = data.split(";");
+      List<String> parsedData = data.split(", ");
       for(int i=0; i<parsedData.length; i++){
         String item = parsedData[i].split(":")[1];
         String name = parsedData[i].split(":")[0];
@@ -88,8 +97,8 @@ class ParameterViewState extends State<ParameterView>{
           int b = int.parse(item.substring(4), radix: 16);
           print(item.substring(0,1) + ", " + item.substring(2,3) + ", " + item.substring(4));
           print(r.toString() + ", " + g.toString() + ", " + b.toString());
-          presetColors[i] = LColor(r,g,b);
-          presetNames[i] = name;
+          presetData[i].color = LColor(r,g,b);
+          presetData[i].name = name;
         }
       }
       checkPresets(color);
@@ -97,7 +106,6 @@ class ParameterViewState extends State<ParameterView>{
     });
 
     super.initState();
-    checkPresets(color);
   }
 
   @override
@@ -194,76 +202,33 @@ class ParameterViewState extends State<ParameterView>{
             ),
           ),
           Card(
-            child: Column(
-              children: <Widget>[
-                Row(
-                  mainAxisSize: MainAxisSize.max,
-                  children: <Widget>[
-                    new Preset(
-                      presetName: presetNames[0],
-                      color: presetColors[0],
-                      activated: presetActive[0],
-                      onDoubleTap: () => presetDoubleTap(0),
+            child: Builder(
+              builder: (BuildContext context) {
+                List<Widget> presets = [];
+                for(int i = 0; i<presetData.length/numPresetRows; i++){
+                  List<Widget> thisRow = [];
+                  for(int j = 0; j<numPresetRows; j++){
+                    int thisNum = i*numPresetRows + j;
+                    if(thisNum >= presetData.length) {
+                      break;
+                    }
+                    thisRow.add(new Preset(
+                      presetName: presetData[thisNum].name,
+                      color: presetData[thisNum].color,
+                      activated: presetData[thisNum].active,
                       onTap: (LColor rgb) => presetTapped(rgb),
-                      onLongPress: () => presetLongPress(0),
-                    ),
-                    new Preset(
-                      presetName: presetNames[1],
-                      color: presetColors[1],
-                      activated: presetActive[1],
-                      onDoubleTap: () => presetDoubleTap(1),
-                      onTap: (LColor rgb) => presetTapped(rgb),
-                      onLongPress: () => presetLongPress(1),
-                    ),
-                    new Preset(
-                      presetName: presetNames[2],
-                      color: presetColors[2],
-                      activated: presetActive[2],
-                      onDoubleTap: () => presetDoubleTap(2),
-                      onTap: (LColor rgb) => presetTapped(rgb),
-                      onLongPress: () => presetLongPress(2),
-                    ),
-                    new Preset(
-                      presetName: presetNames[3],
-                      color: presetColors[3],
-                      activated: presetActive[3],
-                      onDoubleTap: () => presetDoubleTap(3),
-                      onTap: (LColor rgb) => presetTapped(rgb),
-                      onLongPress: () => presetLongPress(3),
-                    )
-                  ],
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.max,
-                  children: <Widget>[
-                    new Preset(
-                      presetName: "Red",
-                      color: LColors.red,
-                      activated: presetActive[4],
-                      onTap: (LColor rgb) => presetTapped(rgb),
-                    ),
-                    new Preset(
-                      presetName: "Green",
-                      color: LColors.green,
-                      activated: presetActive[5],
-                      onTap: (LColor rgb) => presetTapped(rgb),
-                    ),
-                    new Preset(
-                      presetName: "Blue",
-                      color: LColors.blue,
-                      activated: presetActive[6],
-                      onTap: (LColor rgb) => presetTapped(rgb),
-                    ),
-                    new Preset(
-                      presetName: "White",
-                      color: LColors.white,
-                      activated: presetActive[7],
-                      onTap: (LColor rgb) => presetTapped(rgb),
-                    )
-                  ],
-                ),
-              ],
-            )
+                      onLongPress: thisNum < numPresets? () => presetLongPress(thisNum): (){},
+                    ));
+                  }
+                  presets.add(new Row(
+                   children: thisRow,
+                  ));
+                }
+                return new Column(
+                  children: presets,
+                );
+              }
+            ),
           )
         ],
       )
@@ -283,33 +248,30 @@ class ParameterViewState extends State<ParameterView>{
   }
 
   void presetLongPress(int prst){
-    presetColors[prst] = color;
+    presetData[prst].color = color;
     checkPresets(color);
     savePresets();
     setState(() {});
   }
 
   void savePresets(){
-    String presetString = "";
-    for(int i=0; i<presetNames.length; i++){
-      presetString += presetNames[i] + ":";
-      presetString += presetColors[i].toHexColor(255.0);
-      if(i != presetNames.length - 1){
-        presetString += ";";
-      }
-    }
-    print(presetString);
-    GlobalDataHandler.storeData("presets", presetString,(bool b){print("wrote");});
+    GlobalDataHandler.storeData(
+        "presets",
+        presetData.toString().replaceAll(new RegExp("]|\\["), ""),
+        (bool b){
+          print("wrote");
+        }
+    );
   }
 
   void presetDoubleTap(int prst){
-    if(prst > presetNames.length) return;
+    if(prst > numPresets) return;
     String newName;
     showDialog(
         context: context,
         builder: (BuildContext context){
           return new AlertDialog(
-              title: Text("Rename \"" + presetNames[prst] + "\""),
+              title: Text("Rename \"" + presetData[prst].name + "\""),
               content: new TextField(
                 decoration: new InputDecoration(
                     labelText: "New Name"
@@ -325,7 +287,7 @@ class ParameterViewState extends State<ParameterView>{
                 ),
                 new FlatButton(
                   onPressed: (){
-                    presetNames[prst] = newName;
+                    presetData[prst].name = newName;
                     setState(() {
                     });
                     Navigator.pop(context);
@@ -340,11 +302,11 @@ class ParameterViewState extends State<ParameterView>{
 
   void checkPresets(LColor rgb){
     for(int i=0; i<8; i++){
-      if(rgb != presetColors[i]){
-        presetActive[i] = false;
+      if(rgb != presetData[i].color){
+        presetData[i].active = false;
       }
       else{
-        presetActive[i] = true;
+        presetData[i].active = true;
       }
     }
   }
@@ -354,10 +316,6 @@ class ParameterViewState extends State<ParameterView>{
     widget.onParameterChanged("#" + color.toExpHexColor(_intensitySliderVal));
   }
 }
-
-
-
-
 
 class IntensitySwitch extends StatefulWidget {
 
