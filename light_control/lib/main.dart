@@ -69,6 +69,7 @@ class MainState extends State<MainApp> {
                   new Scaffold(
                     appBar: AppBar(
                         centerTitle: true,
+                        elevation: 0.0,
                         title: Text("Live Control"),
                         leading: IconButton(
                             icon: Icon(Icons.devices),

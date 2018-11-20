@@ -49,6 +49,10 @@ class CustomScrollPhysics extends ScrollPhysics{
   }
 }*/
 
+class CustomScrollPhysics extends ScrollPhysics{
+
+}
+
 class ParameterViewState extends State<ParameterView>{
   final GlobalKey _colorPicker = null;
   final GlobalKey _intensitySlider = null;
@@ -60,7 +64,7 @@ class ParameterViewState extends State<ParameterView>{
 
   Color inactiveColor = Colors.grey;
 
-  ScrollPhysics _scrollPhysics = ScrollPhysics();
+  ScrollPhysics _scrollPhysics = CustomScrollPhysics();
 
   bool scroll = true;
 
@@ -114,6 +118,7 @@ class ParameterViewState extends State<ParameterView>{
       child: ListView(
         //controller: _scrollController,
         physics: scroll? new ScrollPhysics(parent: _scrollPhysics) : new NeverScrollableScrollPhysics(parent: _scrollPhysics),
+        //physics: _scrollPhysics,
         children: <Widget>[
           new Card(
             key: _colorPicker,
@@ -125,6 +130,8 @@ class ParameterViewState extends State<ParameterView>{
                     onPointerDown: (){
                       //print("down");
                       //_scrollPhysics.setScroll(false);
+                      ScrollMetrics p = new FixedScrollMetrics(minScrollExtent: 0.0, maxScrollExtent: 0.0, pixels: 0.0, viewportDimension: 0.0, axisDirection: AxisDirection.down);
+                      _scrollPhysics.shouldAcceptUserOffset(p);
                       setState(() {
                         scroll = false;
                       });
