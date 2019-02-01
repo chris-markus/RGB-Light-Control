@@ -72,7 +72,7 @@ class MainState extends State<MainApp> {
                         elevation: 0.0,
                         title: Text("Live Control"),
                         leading: IconButton(
-                            icon: Icon(Icons.devices),
+                            icon: Icon(Icons.lightbulb_outline),
                             onPressed: () => _scaffoldKey.currentState.openDrawer()
                         ),
                         actions: [
@@ -271,7 +271,7 @@ class DeviceListState extends State<DeviceList> {
     if (_devices.length == 0) {
       _listItems.add(new ListTile(
           title:
-              Text("No Devices.", style: new TextStyle(color: Colors.grey))));
+              Text("No Devices... Refresh to Scan.", style: new TextStyle(color: Colors.grey))));
       return _listItems;
     }
     for (var i = 0; i < _devices.length; i++) {

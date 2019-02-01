@@ -11,7 +11,7 @@ double top = 0.0;
 double _pickerWidth = 0.0;
 
 const double _topPickerPadding = 5.0;
-const double _leftPickerPadding = 40.0;
+const double _leftPickerPadding = 3.0;
 const double _cursorDiameter = 12.0;
 
 class ColorPicker extends StatefulWidget {
@@ -30,7 +30,6 @@ class ColorPicker extends StatefulWidget {
   final ValueChanged<LColor> onChanged;
 
   createState() {
-    //hasInit = false;
     return ColorPickerState();
   }
 }

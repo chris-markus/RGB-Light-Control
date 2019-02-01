@@ -44,7 +44,7 @@ class ColorCirclePainter extends CustomPainter{
     ..style = PaintingStyle.stroke;
 
   void paint(Canvas canvas, Size size) {
-    Offset center = new Offset(circleSize/2, -1*circleSize/2);
+    Offset center = new Offset(circleSize, -1*circleSize);
     circle.addOval(new Rect.fromCircle(center: center, radius: circleSize));
     canvas.drawShadow(circle, Colors.black45, 3.0, true);
     canvas.drawCircle(center, circleSize, circlePaint);

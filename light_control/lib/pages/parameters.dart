@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:light_control/utils/LColor.dart';
 import 'package:light_control/utils/preset.dart';
+import 'package:flutter/services.dart';
 
 import '../utils/color_picker.dart';
 import '../utils/storage_interface.dart';
+import '../uipartials/intensity_slider.dart';
 
 LColor color = LColors.white;
 
@@ -109,136 +111,146 @@ class ParameterViewState extends State<ParameterView>{
       redraw();
     });
 
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
     super.initState();
   }
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return Container(
-      child: ListView(
-        //controller: _scrollController,
-        physics: scroll? new ScrollPhysics(parent: _scrollPhysics) : new NeverScrollableScrollPhysics(parent: _scrollPhysics),
-        //physics: _scrollPhysics,
-        children: <Widget>[
-          new Card(
-            key: _colorPicker,
-            child: new Container(
-              child: Column(
-                children: <Widget>[
-                  ColorPicker(
-                    color: color,
-                    onPointerDown: (){
-                      //print("down");
-                      //_scrollPhysics.setScroll(false);
-                      ScrollMetrics p = new FixedScrollMetrics(minScrollExtent: 0.0, maxScrollExtent: 0.0, pixels: 0.0, viewportDimension: 0.0, axisDirection: AxisDirection.down);
-                      _scrollPhysics.shouldAcceptUserOffset(p);
-                      setState(() {
-                        scroll = false;
-                      });
-                    },
-                    onPointerUp: (){
-                      //_scrollPhysics.setScroll(false);
-                      setState(() {
-                        scroll = true;
-                      });
-                    },
-                    onChanged: (_colorRGB){
-                      checkPresets(_colorRGB);
-                      color = _colorRGB;
-                      dataChanged();
-                      setState(() {
-                      });
-                    },
-                  ),
-                  new Padding(
-                    padding: EdgeInsets.only(top: 20.0),
-                    child: Text("Intensity: " + _intensitySliderVal.round().toString()),
-                  ),
-                  new Padding(
-                    padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 10.0),
-                    child: new Row(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          new Flexible(
-                            child: Slider(
-                                min: 0.0,
-                                max: LColor.COLORMAX.toDouble(),
-                                key: _intensitySlider,
-                                value: _intensitySliderVal,
-                                onChanged: (double value){
-                                  _intensitySliderVal = value;
-                                  setState((){});
-                                  dataChanged();
-                                },
-                                onChangeEnd: (double value){
-                                  if(!_intensitySwitch){
-                                    _intensitySwitch = true;
-                                  }
-                                  if(value == 0){
-                                    _intensitySwitch = false;
+        child: ListView(
+          //controller: _scrollController,
+          //physics: scroll? new ScrollPhysics(parent: _scrollPhysics) : new NeverScrollableScrollPhysics(parent: _scrollPhysics),
+          physics: new NeverScrollableScrollPhysics(),
+          //physics: _scrollPhysics,
+          children: <Widget>[
+            new Card(
+              key: _colorPicker,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: LayoutBuilder(
+                  builder: (context, constraints){
+                    //calculate height for intensity slider
+                    double sliderWidth = 50.0;
+                    double pickerSize = constraints.maxWidth - sliderWidth - 10.0;
+                    return new Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Container(
+                          height: pickerSize,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.max,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: <Widget>[
+                              new IconButton(
+                                icon: Icon(Icons.lightbulb_outline, color: _intensitySwitch?Colors.blue:Colors.grey,),
+                                onPressed: (){
+                                  _intensitySwitch = !_intensitySwitch;
+                                  if (_intensitySwitch) {
+                                    _intensitySliderVal = _prevIntensityVal;
                                   }
                                   else {
-                                    _prevIntensityVal = value;
+                                    _intensitySliderVal = 0.0;
                                   }
-                                  setState((){});
+                                  setState(() {});
                                   dataChanged();
                                 },
                               ),
+                              Expanded(
+                                child: new IntensitySlider(
+                                  width: 50,
+                                  intensity: _intensitySliderVal,
+                                  onDrag: (double value){
+                                    _intensitySliderVal = value;
+                                    if (!_intensitySwitch) {
+                                      _intensitySwitch = true;
+                                    }
+                                    if (value == 0) {
+                                      _intensitySwitch = false;
+                                    }
+                                    else {
+                                      _prevIntensityVal = value;
+                                    }
+                                    setState(() {});
+                                    dataChanged();
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
-                          Switch(
-                            onChanged: (bool value){
-                              if(value){
-                                _intensitySliderVal = _prevIntensityVal;
-                              }
-                              else{
-                                _intensitySliderVal = 0.0;
-                              }
-                              _intensitySwitch = !_intensitySwitch;
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: ColorPicker(
+                            color: color,
+                            onPointerDown: () {
+                              //print("down");
+                              //_scrollPhysics.setScroll(false);
+                              ScrollMetrics p = new FixedScrollMetrics(
+                                  minScrollExtent: 0.0,
+                                  maxScrollExtent: 0.0,
+                                  pixels: 0.0,
+                                  viewportDimension: 0.0,
+                                  axisDirection: AxisDirection.down);
+                              _scrollPhysics.shouldAcceptUserOffset(p);
                               setState(() {
+                                scroll = false;
                               });
-                              dataChanged();
                             },
-                            value: _intensitySwitch,
+                            onPointerUp: () {
+                              //_scrollPhysics.setScroll(false);
+                              setState(() {
+                                scroll = true;
+                              });
+                            },
+                            onChanged: (_colorRGB) {
+                              checkPresets(_colorRGB);
+                              color = _colorRGB;
+                              dataChanged();
+                              setState(() {});
+                            },
                           ),
-                        ]
-                      ),
-                  )
-                ],
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
-          ),
-          Card(
-            child: Builder(
-              builder: (BuildContext context) {
-                List<Widget> presets = [];
-                for(int i = 0; i<presetData.length/numPresetRows; i++){
-                  List<Widget> thisRow = [];
-                  for(int j = 0; j<numPresetRows; j++){
-                    int thisNum = i*numPresetRows + j;
-                    if(thisNum >= presetData.length) {
-                      break;
+            Card(
+              child: Builder(
+                  builder: (BuildContext context) {
+                    List<Widget> presets = [];
+                    for (int i = 0; i < presetData.length / numPresetRows;
+                    i++) {
+                      List<Widget> thisRow = [];
+                      for (int j = 0; j < numPresetRows; j++) {
+                        int thisNum = i * numPresetRows + j;
+                        if (thisNum >= presetData.length) {
+                          break;
+                        }
+                        thisRow.add(new Preset(
+                          presetName: presetData[thisNum].name,
+                          color: presetData[thisNum].color,
+                          activated: presetData[thisNum].active,
+                          onTap: (LColor rgb) => presetTapped(rgb),
+                          onLongPress: thisNum < numPresets ? () =>
+                              presetLongPress(thisNum) : () {},
+                        ));
+                      }
+                      presets.add(new Row(
+                        children: thisRow,
+                      ));
                     }
-                    thisRow.add(new Preset(
-                      presetName: presetData[thisNum].name,
-                      color: presetData[thisNum].color,
-                      activated: presetData[thisNum].active,
-                      onTap: (LColor rgb) => presetTapped(rgb),
-                      onLongPress: thisNum < numPresets? () => presetLongPress(thisNum): (){},
-                    ));
+                    return new Column(
+                      children: presets,
+                    );
                   }
-                  presets.add(new Row(
-                   children: thisRow,
-                  ));
-                }
-                return new Column(
-                  children: presets,
-                );
-              }
-            ),
-          )
-        ],
-      )
+              ),
+            )
+          ],
+        )
     );
   }
 
@@ -324,78 +336,3 @@ class ParameterViewState extends State<ParameterView>{
   }
 }
 
-class IntensitySwitch extends StatefulWidget {
-
-  final int intensity;
-  final bool on;
-  final Color activeColor;
-  final Color inactiveColor;
-  final onTap;
-
-  final int minDragDist;
-
-  IntensitySwitch({
-    @required this.intensity,
-    @required this.on,
-    this.activeColor = Colors.blue,
-    this.inactiveColor = Colors.grey,
-    this.onTap,
-    this.minDragDist = 200
-  });
-
-  @override
-  State<StatefulWidget> createState() => IntensityWidgetState();
-
-  void _onDragStart(DragStartDetails d){
-
-  }
-}
-
-class IntensityWidgetState extends State<IntensitySwitch>{
-  @override
-  Widget build(BuildContext context) {
-    return new Expanded(
-      flex: 1,
-      child: GestureDetector(
-        onVerticalDragStart: (DragStartDetails d) =>widget._onDragStart(d),
-        child: new Card(
-          elevation: 3.0,
-          child: Container(
-            child: ClipRRect(
-              borderRadius: new BorderRadius.all(Radius.circular(4.0)),
-              child: new CustomPaint(
-                  painter: new CustomPresetPainter(
-                      presetColor: color.toDartColor(),
-                      indicatorColor: (widget.on? widget.activeColor : widget.inactiveColor)
-                  ),
-                  child: new InkWell(
-                    child: new Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 15.0),
-                          child: new Text(widget.intensity.toString()),
-                        )
-                    ),
-                    onTap: (){
-                      if(widget.onTap != null) {
-                        widget.onTap(widget.intensity);
-                      }
-                    },
-                    /*onDoubleTap: (){
-                                if(onDoubleTap !=null){
-                                  onDoubleTap();
-                                }
-                            },
-                    onLongPress: (){
-                      if(onLongPress != null) {
-                        onLongPress();
-                      }
-                    },*/
-                  )
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

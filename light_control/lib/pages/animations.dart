@@ -821,7 +821,7 @@ class KeyframeState extends State<Keyframe> {
                     ? new Text("-", style: widget.textStyle)
                     : Padding(
                         padding: const EdgeInsets.only(
-                            top: 16.0, left: 12.0, right: 32.0),
+                            top: 32.0, left: 12.0, right: 32.0),
                         child: ColorCircle(
                           color: widget.color,
                           circleSize: 16.0,
